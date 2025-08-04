@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+
 
 // Définition des questions du quiz
 const questions = [
