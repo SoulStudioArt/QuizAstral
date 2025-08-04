@@ -1,5 +1,5 @@
 
-// Définition des questions du quiz
+
 const questions = [
   { id: 'name', label: 'Quel est votre prénom ?', placeholder: 'Ex: Clara', type: 'text', required: true },
   { id: 'birthDate', label: 'Quelle est votre date de naissance ?', type: 'date', required: true },
@@ -24,7 +24,7 @@ const digitalDimensions = [
 ];
 
 const Quiz = () => {
-  // Définition des états de l'application
+
   const [step, setStep] = useState(0); // 0: choix du quiz, 1: questions, 2: chargement, 3: résultats, 4: paiement simulé
   const [quizLength, setQuizLength] = useState(null); // 'short' ou 'long'
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -38,7 +38,6 @@ const Quiz = () => {
   const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false); // Nouvel état pour suivre si le contenu numérique a été acheté
   const [copyStatus, setCopyStatus] = useState('');
 
-  // Sépare le texte en deux moitiés pour le "gating"
   const splitText = useMemo(() => {
     if (!result.text) return { firstHalf: '', secondHalf: '' };
     const midpoint = Math.floor(result.text.length / 2);
@@ -55,13 +54,13 @@ const Quiz = () => {
     return { firstHalf, secondHalf };
   }, [result.text]);
   
-  // Fonction pour gérer les changements dans le formulaire
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setAnswers((prevAnswers) => ({ ...prevAnswers, [name]: value }));
   };
 
-  // Fonction pour passer à la question suivante
+ 
   const handleNextQuestion = () => {
     const currentQuestion = questions[currentQuestionIndex];
     if (currentQuestion.required && !answers[currentQuestion.id]) {
@@ -72,18 +71,18 @@ const Quiz = () => {
     setCurrentQuestionIndex(currentQuestionIndex + 1);
   };
 
-  // Fonction pour revenir à la question précédente
+  
   const handlePreviousQuestion = () => {
     setError('');
     setCurrentQuestionIndex(currentQuestionIndex - 1);
   };
 
-  // Fonction pour lancer la génération de la révélation
+
   const handleSubmit = async () => {
     setLoading(true);
     setStep(2); // Passe à l'étape de chargement
 
-    // Construction du prompt pour le texte avec toutes les réponses
+ 
     const textPrompt = `
       Créez une "Révélation Céleste" personnalisée pour une personne.
       Informations de la personne :
@@ -101,7 +100,7 @@ const Quiz = () => {
       Le texte doit être une révélation unique, d'environ 250 mots, et très personnalisé.
     `;
 
-    // Construction du prompt pour l'image
+ 
     const imagePrompt = `
       Générez une œuvre d'art numérique abstraite et mystique de haute qualité, inspirée par une "Révélation Céleste".
       L'image doit incorporer des éléments visuels liés au cosmos, à l'astrologie, et à l'énergie spirituelle.
@@ -110,10 +109,10 @@ const Quiz = () => {
     `;
 
     try {
-      // API Key est laissée vide pour que l'environnement la gère automatiquement.
+   
       const apiKey = ""; 
 
-      // Appel de l'API Gemini pour la génération de texte
+    
       const payloadText = { contents: [{ role: "user", parts: [{ text: textPrompt }] }] };
       const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
       const responseText = await fetch(apiUrlText, {
@@ -125,7 +124,7 @@ const Quiz = () => {
       const generatedText = resultText?.candidates?.[0]?.content?.parts?.[0]?.text || "Impossible de générer le texte.";
       setResult(prev => ({ ...prev, text: generatedText }));
 
-      // Appel de l'API Imagen pour la génération d'image
+      
       const payloadImage = { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1 } };
       const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
       const responseImage = await fetch(apiUrlImage, {
@@ -151,33 +150,32 @@ const Quiz = () => {
     }
   };
   
-  // Fonction pour gérer l'action du produit
   const handleProductAction = () => {
     if (!result.imageUrl) {
       setError('Impossible d\'effectuer cette action sans l\'image.');
       return;
     }
 
-    // Le client peut acheter n'importe quel produit pour débloquer la suite du texte.
+    
     setIsDigitalUnlocked(true);
 
     if (selectedProduct.name === 'Fichier Numérique HD') {
       setStep(4); // Passe à l'étape de paiement simulé
     } else {
-      // Logic for creating the Shopify link for physical products
+      
       const encodedTitle = encodeURIComponent(`"Révélation Céleste" pour ${answers.name}`);
       const encodedBody = encodeURIComponent(`<p>${result.text}</p>`);
       const encodedImage = encodeURIComponent(result.imageUrl.split(',')[1]); // Enlever le préfixe data:image/png;base64,
       
       const shopifyURL = `https://[NOM_DE_VOTRE_BOUTIQUE].myshopify.com/admin/products/new?product[title]=${encodedTitle}&product[body_html]=${encodedBody}&image[attachment]=${encodedImage}`;
       
-      // Ouverture d'une nouvelle fenêtre pour le lien Shopify
+      
       window.open(shopifyURL, '_blank');
       setShopifyProductLink(shopifyURL);
     }
   };
   
-  // Fonction pour copier le lien dans le presse-papiers
+  
   const copyToClipboard = () => {
     const el = document.createElement('textarea');
     el.value = shopifyProductLink;
@@ -189,7 +187,7 @@ const Quiz = () => {
     setTimeout(() => setCopyStatus(''), 2000); // Réinitialise le message après 2 secondes
   };
   
-  // Fonction pour télécharger le fichier après la "simulation de paiement"
+  
   const handleDownload = () => {
     const link = document.createElement('a');
     link.href = result.imageUrl;
@@ -201,9 +199,9 @@ const Quiz = () => {
     setStep(3);
   };
 
-  // Rendu des différentes étapes du quiz
+  
   const renderContent = () => {
-    // Étape 0: Choix du quiz
+    
     if (step === 0) {
       return (
         <div className="text-center space-y-8">
@@ -230,7 +228,7 @@ const Quiz = () => {
       );
     }
 
-    // Étape 1: Questions
+    
     if (step === 1) {
       const maxQuestions = quizLength === 'short' ? 3 : 7;
       const currentQuestion = questions[currentQuestionIndex];
@@ -292,7 +290,7 @@ const Quiz = () => {
       );
     }
 
-    // Étape 2: Chargement
+    
     if (step === 2) {
       return (
         <div className="flex flex-col items-center justify-center p-8 space-y-4 text-center">
@@ -303,9 +301,9 @@ const Quiz = () => {
       );
     }
 
-    // Étape 3: Résultats avec visualisation et texte tronqué ou complet
+    
     if (step === 3) {
-      // Fonction pour gérer l'affichage de la visualisation du produit
+      
       const renderProductVisualization = () => {
         if (!result.imageUrl) {
           return <p className="text-gray-500">Image en cours de chargement...</p>;
@@ -425,7 +423,7 @@ const Quiz = () => {
                 </div>
                 
                 {selectedProduct.name === 'Fichier Numérique HD' ? (
-                  // Bloc pour le produit numérique
+                  
                   <div className="space-y-4 pt-4">
                     <h4 className="text-lg font-bold text-indigo-900">Choisissez une dimension</h4>
                     <div className="grid grid-cols-3 gap-2">
@@ -454,7 +452,7 @@ const Quiz = () => {
                     </button>
                   </div>
                 ) : (
-                  // Bouton pour les produits physiques
+                  
                   <button
                     onClick={handleProductAction}
                     disabled={!result.imageUrl}
@@ -501,7 +499,7 @@ const Quiz = () => {
       );
     }
     
-    // Étape 4: Page de paiement simulée pour le fichier numérique
+    
     if (step === 4) {
       return (
         <div className="text-center space-y-6">
