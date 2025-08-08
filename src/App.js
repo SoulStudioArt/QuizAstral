@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import './App.css'; // Importez le fichier CSS ici
+
 // Définition des questions du quiz
 const questions = [
   { id: 'name', label: 'Quel est votre prénom ?', placeholder: 'Ex: Clara', type: 'text', required: true },
@@ -11,6 +12,7 @@ const questions = [
   { id: 'lifeLesson', label: 'Quelle est la plus grande leçon de vie que vous ayez apprise ?', placeholder: 'Ex: La patience est une vertu', type: 'textarea' },
 ];
 
+// Définition des produits
 const products = [
   { name: 'Fichier Numérique HD', price: '1,99', mockupUrl: 'https://placehold.co/600x600/E5E7EB/gray?text=Fichier+Numérique' },
   { name: 'Affiche', price: '35,00', mockupUrl: 'https://placehold.co/600x600/F5F5F5/gray?text=Affiche+Mockup' },
@@ -18,6 +20,7 @@ const products = [
   { name: 'T-shirt', price: '28,00', mockupUrl: 'https://placehold.co/600x600/F5F5F5/gray?text=T-shirt+Mockup' },
 ];
 
+// Définition des dimensions pour le produit numérique
 const digitalDimensions = [
   { name: 'Fond d\'écran mobile', size: '1080x1920' },
   { name: 'Impression A4', size: '2480x3508' },
@@ -38,6 +41,7 @@ const Quiz = () => {
   const [shopifyProductLink, setShopifyProductLink] = useState('');
   const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false); // Nouvel état pour suivre si le contenu numérique a été acheté
   const [copyStatus, setCopyStatus] = useState('');
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
 
   // Sépare le texte en deux moitiés pour le "gating"
   const splitText = useMemo(() => {
@@ -64,6 +68,7 @@ const Quiz = () => {
 
   // Fonction pour passer à la question suivante
   const handleNextQuestion = () => {
+    const maxQuestions = quizLength === 'short' ? 3 : 7;
     const currentQuestion = questions[currentQuestionIndex];
     if (currentQuestion.required && !answers[currentQuestion.id]) {
       setError('Ce champ est requis.');
@@ -111,9 +116,7 @@ const Quiz = () => {
     `;
 
     try {
-      // API Key est laissée vide pour que l'environnement la gère automatiquement.
-      const apiKey = ""; 
-
+      const apiKey = "";
       // Appel de l'API Gemini pour la génération de texte
       const payloadText = { contents: [{ role: "user", parts: [{ text: textPrompt }] }] };
       const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
@@ -297,7 +300,7 @@ const Quiz = () => {
     if (step === 2) {
       return (
         <div className="flex flex-col items-center justify-center p-8 space-y-4 text-center">
-          <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="spinner"></div>
           <h2 className="text-xl font-bold text-indigo-900">Création de votre Révélation Céleste...</h2>
           <p className="text-gray-600">Votre rapport et votre œuvre d'art sont en cours de création. Cela peut prendre quelques instants.</p>
         </div>
