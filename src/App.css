@@ -1,24 +1,54 @@
-/* Importation de la police Inter de Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+/*
+  Ce fichier CSS est optimisé pour une intégration fluide
+  avec les classes Tailwind. Il fournit un style de base
+  et des animations pour une expérience utilisateur améliorée.
+*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-/* Styles de base pour l'application */
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #f7fafc;
-  color: #1a202c;
-  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Animation pour le spinner de chargement */
-.animate-spin {
-  animation: spin 1s linear infinite;
+/* Style de base pour les éléments du formulaire */
+input[type="text"],
+input[type="date"],
+input[type="time"],
+textarea {
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db; /* gray-300 */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #3b82f6; /* blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+/* Animations du spinner de chargement */
+.spinner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(#474bff 10%, #0000);
+  mask: radial-gradient(farthest-side, #0000 calc(100% - 9px), #000 0);
+  animation: s3 1s infinite linear;
+}
+
+@keyframes s3 {
   to {
-    transform: rotate(360deg);
+    transform: rotate(1turn);
   }
 }
+
+/*
+  Pour les éléments d'interface utilisateur comme les boutons,
+  nous utilisons directement les classes Tailwind dans le composant React
+  pour une meilleure modularité et un style cohérent.
+*/
