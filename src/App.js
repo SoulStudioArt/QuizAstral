@@ -116,7 +116,7 @@ const Quiz = () => {
     `;
 
     try {
-      const apiKey = "";
+      const apiKey = "AIzaSyAN9yhPNXjEgG8wlElTcyNa0ulgyKIu2hg";
       // Appel de l'API Gemini pour la génération de texte
       const payloadText = { contents: [{ role: "user", parts: [{ text: textPrompt }] }] };
       const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
