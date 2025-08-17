@@ -6,15 +6,16 @@ export default async function (req, res) {
   }
 
   try {
+    // Récupère les données brutes des réponses du quiz envoyées par le front-end.
+    // L'objet `req.body` est l'équivalent de l'objet `dataToSend` dans votre App.js.
     const { answers, quizLength } = req.body;
+    
+    // Vérification cruciale : si answers n'existe pas, on arrête tout.
+    if (!answers) {
+      return res.status(400).json({ error: 'Données de quiz manquantes.' });
+    }
 
-    // --- DEBUT DES LOGS DE DEBUG ---
-    // Ces logs vont nous montrer ce qui se passe réellement dans la fonction
-    console.log('API Key:', process.env.GEMINI_API_KEY ? 'exists' : 'does not exist');
-    console.log('Received answers:', answers);
-    console.log('Received quizLength:', quizLength);
-    // --- FIN DES LOGS DE DEBUG ---
-
+    // Récupère la clé d'API de Gemini depuis les variables d'environnement Vercel.
     const apiKey = process.env.GEMINI_API_KEY;
 
     // --- Construction des prompts pour les APIs de Google ---
