@@ -84,48 +84,52 @@ const Quiz = () => {
     setCurrentQuestionIndex(currentQuestionIndex - 1);
   };
 
-// Fonction pour lancer la génération de la révélation
-const handleSubmit = async () => {
-    setLoading(true);
-    setStep(2); // Passe à l'étape de chargement
+  // Fonction pour lancer la génération de la révélation
+  const handleSubmit = async () => {
+      setLoading(true);
+      setStep(2); // Passe à l'étape de chargement
 
-    // Les réponses du quiz à envoyer à la Vercel Function
-    const dataToSend = { ...answers, quizLength };
+      // Les réponses du quiz à envoyer à la Vercel Function
+      const dataToSend = {
+        answers: answers,
+        quizLength: quizLength
+      };
 
-    try {
-        // L'appel API est maintenant dirigé vers votre Vercel Function
-        const response = await fetch('/api/generate-astral-result', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataToSend)
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch from Vercel Function');
-        }
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            setError(data.error);
-        } else {
-            setResult({
-                text: data.text,
-                imageUrl: data.imageUrl
-            });
-            setError('');
-        }
+      try {
+          // L'appel API est maintenant dirigé vers votre Vercel Function
+          const response = await fetch('/api/generate-astral-result', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(dataToSend)
+          });
+          
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || `Failed to fetch from Vercel Function: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.error) {
+              setError(data.error);
+          } else {
+              setResult({
+                  text: data.text,
+                  imageUrl: data.imageUrl
+              });
+              setError('');
+          }
 
-    } catch (e) {
-        console.error("Erreur lors de l'appel de la Vercel Function :", e);
-        setError("Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
-    } finally {
-        setLoading(false);
-        setStep(3); // Passe à l'étape des résultats
-    }
-};
+      } catch (e) {
+          console.error("Erreur lors de l'appel de la Vercel Function :", e);
+          setError(e.message || "Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
+      } finally {
+          setLoading(false);
+          setStep(3); // Passe à l'étape des résultats
+      }
+  };
   
   // Fonction pour gérer l'action du produit
   const handleProductAction = () => {
