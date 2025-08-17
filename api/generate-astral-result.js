@@ -1,23 +1,23 @@
 import fetch from 'node-fetch';
 
 export default async function (req, res) {
-  // Vérifie que la requête est bien de type POST.
-  // C'est une mesure de sécurité et cela résout l'erreur "405 Method Not Allowed".
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
   try {
-    // Récupère les données brutes des réponses du quiz envoyées par le front-end.
-    // L'objet `req.body` est l'équivalent de l'objet `dataToSend` dans votre App.js.
-    // Correction ici : on extrait directement answers et quizLength de req.body
     const { answers, quizLength } = req.body;
 
-    // Récupère la clé d'API de Gemini depuis les variables d'environnement Vercel.
+    // --- DEBUT DES LOGS DE DEBUG ---
+    // Ces logs vont nous montrer ce qui se passe réellement dans la fonction
+    console.log('API Key:', process.env.GEMINI_API_KEY ? 'exists' : 'does not exist');
+    console.log('Received answers:', answers);
+    console.log('Received quizLength:', quizLength);
+    // --- FIN DES LOGS DE DEBUG ---
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     // --- Construction des prompts pour les APIs de Google ---
-    // Les prompts sont maintenant construits ici, sur le backend, pour des raisons de sécurité.
     const textPrompt = `
       Créez une "Révélation Céleste" personnalisée pour une personne.
       Informations de la personne :
@@ -65,7 +65,6 @@ export default async function (req, res) {
     const base64Data = resultImage?.predictions?.[0]?.bytesBase64Encoded;
     const imageUrl = base64Data ? `data:image/png;base64,${base64Data}` : null;
 
-    // Renvoie le résultat au front-end
     res.status(200).json({ text: generatedText, imageUrl });
 
   } catch (error) {
