@@ -115,44 +115,39 @@ const Quiz = () => {
       L'image doit représenter visuellement la révélation personnalisée de ${answers.name}, en tenant compte de ses aspirations et de sa personnalité.
     `;
 
-    try {
-      const apiKey = "AIzaSyAN9yhPNXjEgG8wlElTcyNa0ulgyKIu2hg";
-      // Appel de l'API Gemini pour la génération de texte
-      const payloadText = { contents: [{ role: "user", parts: [{ text: textPrompt }] }] };
-      const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-      const responseText = await fetch(apiUrlText, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payloadText)
-      });
-      const resultText = await responseText.json();
-      const generatedText = resultText?.candidates?.[0]?.content?.parts?.[0]?.text || "Impossible de générer le texte.";
-      setResult(prev => ({ ...prev, text: generatedText }));
+   // Début du nouveau code
+try {
+    // Les réponses du quiz à envoyer à la Vercel Function
+    const quizResponses = { ...answers, quizLength };
 
-      // Appel de l'API Imagen pour la génération d'image
-      const payloadImage = { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1 } };
-      const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
-      const responseImage = await fetch(apiUrlImage, {
+    // L'appel API est maintenant dirigé vers votre Vercel Function
+    const response = await fetch('/api/generate-astral-result', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payloadImage)
-      });
-      const resultImage = await responseImage.json();
-      const base64Data = resultImage?.predictions?.[0]?.bytesBase64Encoded;
-      if (base64Data) {
-        const imageUrl = `data:image/png;base64,${base64Data}`;
-        setResult(prev => ({ ...prev, imageUrl }));
-      } else {
-        // En cas d'échec de l'image, on utilise un fallback
-        setResult(prev => ({ ...prev, imageUrl: 'https://placehold.co/500x500?text=Image+non+disponible' }));
-      }
-    } catch (e) {
-      console.error("Erreur lors de l'appel de l'API :", e);
-      setError("Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
-    } finally {
-      setLoading(false);
-      setStep(3); // Passe à l'étape des résultats
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ questions: quizResponses })
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to fetch from Vercel Function');
     }
+    
+    const data = await response.json();
+    
+    setResult({
+        text: data.text,
+        imageUrl: data.imageUrl
+    });
+
+} catch (e) {
+    console.error("Erreur lors de l'appel de la Vercel Function :", e);
+    setError("Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
+} finally {
+    setLoading(false);
+    setStep(3); // Passe à l'étape des résultats
+}
+// Fin du nouveau code 
   };
   
   // Fonction pour gérer l'action du produit
