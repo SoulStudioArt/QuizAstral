@@ -84,71 +84,48 @@ const Quiz = () => {
     setCurrentQuestionIndex(currentQuestionIndex - 1);
   };
 
-  // Fonction pour lancer la génération de la révélation
-  const handleSubmit = async () => {
+// Fonction pour lancer la génération de la révélation
+const handleSubmit = async () => {
     setLoading(true);
     setStep(2); // Passe à l'étape de chargement
 
-    // Construction du prompt pour le texte avec toutes les réponses
-    const textPrompt = `
-      Créez une "Révélation Céleste" personnalisée pour une personne.
-      Informations de la personne :
-      - Prénom : ${answers.name || 'Non spécifié'}
-      - Date de naissance : ${answers.birthDate || 'Non spécifiée'}
-      - Lieu de naissance : ${answers.birthPlace || 'Non spécifié'}
-      ${answers.birthTime ? `- Heure de naissance : ${answers.birthTime}\n` : ''}
-      ${answers.personalityTrait ? `- Trait de personnalité : ${answers.personalityTrait}\n` : ''}
-      ${answers.biggestDream ? `- Plus grand rêve : ${answers.biggestDream}\n` : ''}
-      ${answers.lifeLesson ? `- Plus grande leçon de vie : ${answers.lifeLesson}\n` : ''}
-
-      Utilisez ces informations pour offrir une interprétation profonde et personnelle.
-      Le texte doit être inspiré par l'astrologie et la spiritualité.
-      Adoptez un ton inspirant et poétique, dans le style "Soul Studio Art".
-      Le texte doit être une révélation unique, d'environ 250 mots, et très personnalisé.
-    `;
-
-    // Construction du prompt pour l'image
-    const imagePrompt = `
-      Générez une œuvre d'art numérique abstraite et mystique de haute qualité, inspirée par une "Révélation Céleste".
-      L'image doit incorporer des éléments visuels liés au cosmos, à l'astrologie, et à l'énergie spirituelle.
-      Les couleurs doivent être vibrantes et profondes. Le style doit être élégant et moderne, comme de l'art de studio pour l'âme.
-      L'image doit représenter visuellement la révélation personnalisée de ${answers.name}, en tenant compte de ses aspirations et de sa personnalité.
-    `;
-
-   // Début du nouveau code
-try {
     // Les réponses du quiz à envoyer à la Vercel Function
-    const quizResponses = { ...answers, quizLength };
+    const dataToSend = { ...answers, quizLength };
 
-    // L'appel API est maintenant dirigé vers votre Vercel Function
-    const response = await fetch('/api/generate-astral-result', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ questions: quizResponses })
-    });
-    
-    if (!response.ok) {
-        throw new Error('Failed to fetch from Vercel Function');
+    try {
+        // L'appel API est maintenant dirigé vers votre Vercel Function
+        const response = await fetch('/api/generate-astral-result', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataToSend)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch from Vercel Function');
+        }
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            setError(data.error);
+        } else {
+            setResult({
+                text: data.text,
+                imageUrl: data.imageUrl
+            });
+            setError('');
+        }
+
+    } catch (e) {
+        console.error("Erreur lors de l'appel de la Vercel Function :", e);
+        setError("Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
+    } finally {
+        setLoading(false);
+        setStep(3); // Passe à l'étape des résultats
     }
-    
-    const data = await response.json();
-    
-    setResult({
-        text: data.text,
-        imageUrl: data.imageUrl
-    });
-
-} catch (e) {
-    console.error("Erreur lors de l'appel de la Vercel Function :", e);
-    setError("Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
-} finally {
-    setLoading(false);
-    setStep(3); // Passe à l'étape des résultats
-}
-// Fin du nouveau code 
-  };
+};
   
   // Fonction pour gérer l'action du produit
   const handleProductAction = () => {
