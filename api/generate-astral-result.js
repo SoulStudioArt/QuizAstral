@@ -10,7 +10,8 @@ export default async function (req, res) {
   try {
     // Récupère les données brutes des réponses du quiz envoyées par le front-end.
     // L'objet `req.body` est l'équivalent de l'objet `dataToSend` dans votre App.js.
-    const { answers, quizLength } = req.body.questions;
+    // Correction ici : on extrait directement answers et quizLength de req.body
+    const { answers, quizLength } = req.body;
 
     // Récupère la clé d'API de Gemini depuis les variables d'environnement Vercel.
     const apiKey = process.env.GEMINI_API_KEY;
