@@ -1,21 +1,18 @@
 import fetch from 'node-fetch';
 
 export default async function (req, res) {
+  // Vérifie que la requête est bien de type POST.
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
   try {
-    // Récupère les données brutes des réponses du quiz envoyées par le front-end.
-    // L'objet `req.body` est l'équivalent de l'objet `dataToSend` dans votre App.js.
-    const { answers, quizLength } = req.body;
+    const { answers } = req.body;
     
-    // Vérification cruciale : si answers n'existe pas, on arrête tout.
     if (!answers) {
       return res.status(400).json({ error: 'Données de quiz manquantes.' });
     }
 
-    // Récupère la clé d'API de Gemini depuis les variables d'environnement Vercel.
     const apiKey = process.env.GEMINI_API_KEY;
 
     // --- Construction des prompts pour les APIs de Google ---
@@ -51,9 +48,14 @@ export default async function (req, res) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payloadText)
     });
+
+    if (!responseText.ok) {
+        return res.status(responseText.status).json({ error: `Erreur de l'API Gemini: ${responseText.statusText}` });
+    }
+
     const resultText = await responseText.json();
     const generatedText = resultText?.candidates?.[0]?.content?.parts?.[0]?.text || "Impossible de générer le texte.";
-
+    
     // --- Appel de l'API Imagen pour l'image ---
     const payloadImage = { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1 } };
     const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
@@ -62,6 +64,11 @@ export default async function (req, res) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payloadImage)
     });
+
+    if (!responseImage.ok) {
+        return res.status(responseImage.status).json({ error: `Erreur de l'API Imagen: ${responseImage.statusText}` });
+    }
+
     const resultImage = await responseImage.json();
     const base64Data = resultImage?.predictions?.[0]?.bytesBase64Encoded;
     const imageUrl = base64Data ? `data:image/png;base64,${base64Data}` : null;
@@ -69,7 +76,7 @@ export default async function (req, res) {
     res.status(200).json({ text: generatedText, imageUrl });
 
   } catch (error) {
-    console.error('Erreur de la Vercel Function :', error);
-    res.status(500).json({ error: 'Une erreur est survenue sur le serveur.' });
+    console.error('Erreur de la Vercel Function (texte) :', error);
+    res.status(500).json({ error: 'Une erreur est survenue sur le serveur lors de la génération du texte.' });
   }
 }
