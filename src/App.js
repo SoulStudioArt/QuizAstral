@@ -39,15 +39,13 @@ const Quiz = () => {
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
   const [selectedDimension, setSelectedDimension] = useState(digitalDimensions[0]);
   const [shopifyProductLink, setShopifyProductLink] = useState('');
-  const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false); // Nouvel état pour suivre si le contenu numérique a été acheté
+  const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
-  const [isLoadingImage, setIsLoadingImage] = useState(false);
-
+  
   // Sépare le texte en deux moitiés pour le "gating"
   const splitText = useMemo(() => {
     if (!result.text) return { firstHalf: '', secondHalf: '' };
     const midpoint = Math.floor(result.text.length / 2);
-    // On cherche le dernier point ou virgule pour ne pas couper un mot
     let splitPoint = result.text.lastIndexOf('.', midpoint);
     if (splitPoint === -1) {
       splitPoint = result.text.lastIndexOf(',', midpoint);
@@ -84,7 +82,7 @@ const Quiz = () => {
     setCurrentQuestionIndex(currentQuestionIndex - 1);
   };
 
-  // Fonction pour lancer la génération de la révélation
+  // Fonction pour lancer la génération de la révélation (texte et image)
   const handleSubmit = async () => {
       setLoading(true);
       setStep(2); // Passe à l'étape de chargement
@@ -96,34 +94,40 @@ const Quiz = () => {
       };
 
       try {
-          // L'appel API est maintenant dirigé vers votre Vercel Function
-          const response = await fetch('/api/generate-astral-result', {
+          // Appel asynchrone pour la génération de texte et d'image
+          const [textResponse, imageResponse] = await Promise.all([
+            fetch('/api/generate-astral-result', {
               method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json'
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(dataToSend)
-          });
+            }),
+            fetch('/api/generate-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ answers: answers })
+            })
+          ]);
           
-          if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || `Failed to fetch from Vercel Function: ${response.statusText}`);
+          if (!textResponse.ok) {
+              const errorText = await textResponse.json();
+              throw new Error(errorText.error || `Erreur du serveur (texte): ${textResponse.statusText}`);
           }
-          
-          const data = await response.json();
-          
-          if (data.error) {
-              setError(data.error);
-          } else {
-              setResult({
-                  text: data.text,
-                  imageUrl: data.imageUrl
-              });
-              setError('');
+          if (!imageResponse.ok) {
+              const errorImage = await imageResponse.json();
+              throw new Error(errorImage.error || `Erreur du serveur (image): ${imageResponse.statusText}`);
           }
 
+          const textData = await textResponse.json();
+          const imageData = await imageResponse.json();
+          
+          setResult({
+              text: textData.text,
+              imageUrl: imageData.imageUrl
+          });
+          setError('');
+
       } catch (e) {
-          console.error("Erreur lors de l'appel de la Vercel Function :", e);
+          console.error("Erreur lors de l'appel des Vercel Functions :", e);
           setError(e.message || "Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
       } finally {
           setLoading(false);
@@ -138,20 +142,17 @@ const Quiz = () => {
       return;
     }
 
-    // Le client peut acheter n'importe quel produit pour débloquer la suite du texte.
     setIsDigitalUnlocked(true);
 
     if (selectedProduct.name === 'Fichier Numérique HD') {
-      setStep(4); // Passe à l'étape de paiement simulé
+      setStep(4);
     } else {
-      // Logic for creating the Shopify link for physical products
       const encodedTitle = encodeURIComponent(`"Révélation Céleste" pour ${answers.name}`);
       const encodedBody = encodeURIComponent(`<p>${result.text}</p>`);
-      const encodedImage = encodeURIComponent(result.imageUrl.split(',')[1]); // Enlever le préfixe data:image/png;base64,
+      const encodedImage = encodeURIComponent(result.imageUrl.split(',')[1]);
       
       const shopifyURL = `https://[NOM_DE_VOTRE_BOUTIQUE].myshopify.com/admin/products/new?product[title]=${encodedTitle}&product[body_html]=${encodedBody}&image[attachment]=${encodedImage}`;
       
-      // Ouverture d'une nouvelle fenêtre pour le lien Shopify
       window.open(shopifyURL, '_blank');
       setShopifyProductLink(shopifyURL);
     }
@@ -166,7 +167,7 @@ const Quiz = () => {
     document.execCommand('copy');
     document.body.removeChild(el);
     setCopyStatus('Lien copié !');
-    setTimeout(() => setCopyStatus(''), 2000); // Réinitialise le message après 2 secondes
+    setTimeout(() => setCopyStatus(''), 2000);
   };
   
   // Fonction pour télécharger le fichier après la "simulation de paiement"
@@ -285,7 +286,6 @@ const Quiz = () => {
 
     // Étape 3: Résultats avec visualisation et texte tronqué ou complet
     if (step === 3) {
-      // Fonction pour gérer l'affichage de la visualisation du produit
       const renderProductVisualization = () => {
         if (!result.imageUrl) {
           return <p className="text-gray-500">Image en cours de chargement...</p>;
@@ -295,13 +295,11 @@ const Quiz = () => {
           case 'Affiche':
             return (
               <div className="relative w-full aspect-[4/3] bg-gray-200 rounded-2xl shadow-inner overflow-hidden">
-                {/* Mockup de l'affiche */}
                 <img
                   src="https://placehold.co/800x600/F5F5F5/gray?text=Affiche+Mockup"
                   alt="Affiche sur un mur"
                   className="w-full h-full object-cover"
                 />
-                {/* Votre image générée est superposée sur le mockup */}
                 <img
                   src={result.imageUrl}
                   alt="Design d'affiche"
@@ -363,7 +361,6 @@ const Quiz = () => {
               <div className="p-6 bg-gray-50 rounded-xl shadow-inner">
                 <h3 className="text-2xl font-bold text-indigo-900 mb-4">Votre Voyage Astral</h3>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.firstHalf}</p>
-                {/* Section pour débloquer le reste du texte */}
                 {!isDigitalUnlocked && splitText.secondHalf && (
                   <div className="mt-6 p-6 bg-indigo-100 border-l-4 border-indigo-500 rounded-lg shadow-md">
                     <p className="text-indigo-800 font-semibold">
@@ -405,7 +402,6 @@ const Quiz = () => {
                 </div>
                 
                 {selectedProduct.name === 'Fichier Numérique HD' ? (
-                  // Bloc pour le produit numérique
                   <div className="space-y-4 pt-4">
                     <h4 className="text-lg font-bold text-indigo-900">Choisissez une dimension</h4>
                     <div className="grid grid-cols-3 gap-2">
@@ -424,7 +420,6 @@ const Quiz = () => {
                         </button>
                       ))}
                     </div>
-                    {/* Bouton pour les produits numériques, placé à cet endroit */}
                     <button
                       onClick={handleProductAction}
                       disabled={!result.imageUrl}
@@ -434,7 +429,6 @@ const Quiz = () => {
                     </button>
                   </div>
                 ) : (
-                  // Bouton pour les produits physiques
                   <button
                     onClick={handleProductAction}
                     disabled={!result.imageUrl}
