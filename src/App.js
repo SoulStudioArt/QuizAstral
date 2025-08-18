@@ -46,6 +46,7 @@ const Quiz = () => {
   const splitText = useMemo(() => {
     if (!result.text) return { firstHalf: '', secondHalf: '' };
     const midpoint = Math.floor(result.text.length / 2);
+    // On cherche le dernier point ou virgule pour ne pas couper un mot
     let splitPoint = result.text.lastIndexOf('.', midpoint);
     if (splitPoint === -1) {
       splitPoint = result.text.lastIndexOf(',', midpoint);
@@ -82,53 +83,73 @@ const Quiz = () => {
     setCurrentQuestionIndex(currentQuestionIndex - 1);
   };
 
-  // Fonction pour lancer la génération de la révélation (texte et image)
+  // Fonction pour lancer la génération de la révélation
   const handleSubmit = async () => {
       setLoading(true);
       setStep(2); // Passe à l'étape de chargement
 
-      // Les réponses du quiz à envoyer aux Vercel Functions
-      const dataToSend = { answers: answers };
+      // Construction du prompt pour le texte avec toutes les réponses
+      const textPrompt = `
+        Créez une "Révélation Céleste" personnalisée pour une personne.
+        Informations de la personne :
+        - Prénom : ${answers.name || 'Non spécifié'}
+        - Date de naissance : ${answers.birthDate || 'Non spécifiée'}
+        - Lieu de naissance : ${answers.birthPlace || 'Non spécifié'}
+        ${answers.birthTime ? `- Heure de naissance : ${answers.birthTime}\n` : ''}
+        ${answers.personalityTrait ? `- Trait de personnalité : ${answers.personalityTrait}\n` : ''}
+        ${answers.biggestDream ? `- Plus grand rêve : ${answers.biggestDream}\n` : ''}
+        ${answers.lifeLesson ? `- Plus grande leçon de vie : ${answers.lifeLesson}\n` : ''}
+        
+        Utilisez ces informations pour offrir une interprétation profonde et personnelle.
+        Le texte doit être inspiré par l'astrologie et la spiritualité.
+        Adoptez un ton inspirant et poétique, dans le style "Soul Studio Art".
+        Le texte doit être une révélation unique, d'environ 250 mots, et très personnalisé.
+      `;
+
+      // Construction du prompt pour l'image
+      const imagePrompt = `
+        Générez une œuvre d'art numérique abstraite et mystique de haute qualité, inspirée par une "Révélation Céleste".
+        L'image doit incorporer des éléments visuels liés au cosmos, à l'astrologie, et à l'énergie spirituelle.
+        Les couleurs doivent être vibrantes et profondes. Le style doit être élégant et moderne, comme de l'art de studio pour l'âme.
+        L'image doit représenter visuellement la révélation personnalisée de ${answers.name}, en tenant compte de ses aspirations et de sa personnalité.
+      `;
 
       try {
-          // Appel asynchrone pour la génération de texte et d'image
-          const [textResponse, imageResponse] = await Promise.all([
-            fetch('/api/generate-astral-result', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(dataToSend)
-            }),
-            fetch('/api/generate-image', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(dataToSend)
-            })
-          ]);
-          
-          if (!textResponse.ok) {
-              const errorText = await textResponse.json();
-              throw new Error(errorText.error || `Erreur du serveur (texte): ${textResponse.statusText}`);
-          }
-          if (!imageResponse.ok) {
-              const errorImage = await imageResponse.json();
-              throw new Error(errorImage.error || `Erreur du serveur (image): ${imageResponse.statusText}`);
-          }
+        const apiKey = "AIzaSyAN9yhPNXjEgG8wlElTcyNa0ulgyKIu2hg"; // Clé à remplacer
+        // Appel de l'API Gemini pour la génération de texte
+        const payloadText = { contents: [{ role: "user", parts: [{ text: textPrompt }] }] };
+        const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const responseText = await fetch(apiUrlText, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadText)
+        });
+        const resultText = await responseText.json();
+        const generatedText = resultText?.candidates?.[0]?.content?.parts?.[0]?.text || "Impossible de générer le texte.";
+        setResult(prev => ({ ...prev, text: generatedText }));
 
-          const textData = await textResponse.json();
-          const imageData = await imageResponse.json();
-          
-          setResult({
-              text: textData.text,
-              imageUrl: imageData.imageUrl
-          });
-          setError('');
-
+        // Appel de l'API Imagen pour la génération d'image
+        const payloadImage = { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1 } };
+        const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+        const responseImage = await fetch(apiUrlImage, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadImage)
+        });
+        const resultImage = await responseImage.json();
+        const base64Data = resultImage?.predictions?.[0]?.bytesBase64Encoded;
+        if (base64Data) {
+          const imageUrl = `data:image/png;base64,${base64Data}`;
+          setResult(prev => ({ ...prev, imageUrl }));
+        } else {
+          setResult(prev => ({ ...prev, imageUrl: 'https://placehold.co/500x500?text=Image+non+disponible' }));
+        }
       } catch (e) {
-          console.error("Erreur lors de l'appel des Vercel Functions :", e);
-          setError(e.message || "Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
+        console.error("Erreur lors de l'appel de l'API :", e);
+        setError("Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
       } finally {
-          setLoading(false);
-          setStep(3); // Passe à l'étape des résultats
+        setLoading(false);
+        setStep(3); // Passe à l'étape des résultats
       }
   };
   
@@ -142,14 +163,16 @@ const Quiz = () => {
     setIsDigitalUnlocked(true);
 
     if (selectedProduct.name === 'Fichier Numérique HD') {
-      setStep(4);
+      setStep(4); // Passe à l'étape de paiement simulé
     } else {
+      // Logic for creating the Shopify link for physical products
       const encodedTitle = encodeURIComponent(`"Révélation Céleste" pour ${answers.name}`);
       const encodedBody = encodeURIComponent(`<p>${result.text}</p>`);
       const encodedImage = encodeURIComponent(result.imageUrl.split(',')[1]);
       
       const shopifyURL = `https://[NOM_DE_VOTRE_BOUTIQUE].myshopify.com/admin/products/new?product[title]=${encodedTitle}&product[body_html]=${encodedBody}&image[attachment]=${encodedImage}`;
       
+      // Ouverture d'une nouvelle fenêtre pour le lien Shopify
       window.open(shopifyURL, '_blank');
       setShopifyProductLink(shopifyURL);
     }
@@ -164,7 +187,7 @@ const Quiz = () => {
     document.execCommand('copy');
     document.body.removeChild(el);
     setCopyStatus('Lien copié !');
-    setTimeout(() => setCopyStatus(''), 2000);
+    setTimeout(() => setCopyStatus(''), 2000); // Réinitialise le message après 2 secondes
   };
   
   // Fonction pour télécharger le fichier après la "simulation de paiement"
@@ -499,7 +522,7 @@ const Quiz = () => {
           </div>
           <button
             onClick={handleDownload}
-            className="w-full max-w-sm py-4 bg-indigo-600 text-white text-xl font-bold rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500/50"
+            className="w-full py-4 bg-indigo-600 text-white text-xl font-bold rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500/50"
           >
             Payer et Télécharger
           </button>
