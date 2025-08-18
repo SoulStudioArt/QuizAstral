@@ -88,7 +88,8 @@ const Quiz = () => {
       setStep(2); // Passe à l'étape de chargement
 
       // Les réponses du quiz à envoyer aux Vercel Functions
-      const dataToSend = { answers: answers };
+      const dataToSendText = { answers: answers, quizLength: quizLength };
+      const dataToSendImage = { answers: answers };
 
       try {
           // Appel asynchrone pour la génération de texte et d'image
@@ -96,12 +97,12 @@ const Quiz = () => {
             fetch('/api/generate-astral-result', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(dataToSend)
+              body: JSON.stringify(dataToSendText)
             }),
             fetch('/api/generate-image', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(dataToSend)
+              body: JSON.stringify(dataToSendImage)
             })
           ]);
           
