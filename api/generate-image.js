@@ -6,6 +6,7 @@ export default async function (req, res) {
   }
 
   try {
+    // Correction : la fonction attend maintenant un objet 'answers'
     const { answers } = req.body;
     
     if (!answers) {
