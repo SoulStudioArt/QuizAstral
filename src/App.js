@@ -87,11 +87,8 @@ const Quiz = () => {
       setLoading(true);
       setStep(2); // Passe à l'étape de chargement
 
-      // Les réponses du quiz à envoyer à la Vercel Function
-      const dataToSend = {
-        answers: answers,
-        quizLength: quizLength
-      };
+      // Les réponses du quiz à envoyer aux Vercel Functions
+      const dataToSend = { answers, quizLength };
 
       try {
           // Appel asynchrone pour la génération de texte et d'image

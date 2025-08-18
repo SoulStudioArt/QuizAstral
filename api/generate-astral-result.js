@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 
 export default async function (req, res) {
+  // Vérifie que la requête est bien de type POST.
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
@@ -14,7 +15,7 @@ export default async function (req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // --- Construction des prompts ---
+    // --- Construction des prompts pour les APIs de Google ---
     const textPrompt = `
       Créez une "Révélation Céleste" personnalisée pour une personne.
       Informations de la personne :
@@ -32,14 +33,6 @@ export default async function (req, res) {
       Le texte doit être une révélation unique, d'environ 250 mots, et très personnalisé.
     `;
 
-    const imagePrompt = `
-      Générez une œuvre d'art numérique abstraite et mystique de haute qualité, inspirée par une "Révélation Céleste".
-      L'image doit incorporer des éléments visuels liés au cosmos, à l'astrologie, et à l'énergie spirituelle.
-      Les couleurs doivent être vibrantes et profondes. Le style doit être élégant et moderne, comme de l'art de studio pour l'âme.
-      L'image doit représenter visuellement la révélation personnalisée de ${answers.name}, en tenant compte de ses aspirations et de sa personnalité.
-    `;
-
-    // --- Appel de l'API Gemini pour le texte ---
     const payloadText = { contents: [{ role: "user", parts: [{ text: textPrompt }] }] };
     const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
     const responseText = await fetch(apiUrlText, {
@@ -54,25 +47,8 @@ export default async function (req, res) {
 
     const resultText = await responseText.json();
     const generatedText = resultText?.candidates?.[0]?.content?.parts?.[0]?.text || "Impossible de générer le texte.";
-    
-    // --- Appel de l'API Imagen pour l'image ---
-    const payloadImage = { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1 } };
-    const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
-    const responseImage = await fetch(apiUrlImage, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payloadImage)
-    });
 
-    if (!responseImage.ok) {
-        return res.status(responseImage.status).json({ error: `Erreur de l'API Imagen: ${responseImage.statusText}` });
-    }
-
-    const resultImage = await responseImage.json();
-    const base64Data = resultImage?.predictions?.[0]?.bytesBase64Encoded;
-    const imageUrl = base64Data ? `data:image/png;base64,${base64Data}` : null;
-
-    res.status(200).json({ text: generatedText, imageUrl });
+    res.status(200).json({ text: generatedText });
 
   } catch (error) {
     console.error('Erreur de la Vercel Function (texte) :', error);
