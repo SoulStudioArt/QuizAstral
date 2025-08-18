@@ -1,7 +1,6 @@
 import fetch from 'node-fetch';
 
 export default async function (req, res) {
-  // Vérifie que la requête est bien de type POST.
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
@@ -15,7 +14,7 @@ export default async function (req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // --- Construction des prompts pour les APIs de Google ---
+    // --- Construction des prompts ---
     const textPrompt = `
       Créez une "Révélation Céleste" personnalisée pour une personne.
       Informations de la personne :

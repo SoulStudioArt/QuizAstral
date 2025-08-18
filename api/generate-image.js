@@ -7,9 +7,13 @@ export default async function (req, res) {
 
   try {
     const { answers } = req.body;
+    
+    if (!answers) {
+      return res.status(400).json({ error: 'Données de quiz manquantes.' });
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // Construction du prompt pour l'image
     const imagePrompt = `
       Générez une œuvre d'art numérique abstraite et mystique de haute qualité, inspirée par une "Révélation Céleste".
       L'image doit incorporer des éléments visuels liés au cosmos, à l'astrologie, et à l'énergie spirituelle.
@@ -17,7 +21,6 @@ export default async function (req, res) {
       L'image doit représenter visuellement la révélation personnalisée de ${answers.name}, en tenant compte de ses aspirations et de sa personnalité.
     `;
 
-    // Appel de l'API Imagen pour la génération d'image
     const payloadImage = { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1 } };
     const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
     const responseImage = await fetch(apiUrlImage, {
@@ -25,6 +28,11 @@ export default async function (req, res) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payloadImage)
     });
+
+    if (!responseImage.ok) {
+        return res.status(responseImage.status).json({ error: `Erreur de l'API Imagen: ${responseImage.statusText}` });
+    }
+
     const resultImage = await responseImage.json();
     const base64Data = resultImage?.predictions?.[0]?.bytesBase64Encoded;
     const imageUrl = base64Data ? `data:image/png;base64,${base64Data}` : null;
@@ -32,7 +40,7 @@ export default async function (req, res) {
     res.status(200).json({ imageUrl });
 
   } catch (error) {
-    console.error('Erreur de la Vercel Function pour l\'image :', error);
+    console.error('Erreur de la Vercel Function (image) :', error);
     res.status(500).json({ error: 'Une erreur est survenue sur le serveur lors de la génération de l\'image.' });
   }
 }
