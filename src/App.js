@@ -88,8 +88,7 @@ const Quiz = () => {
       setStep(2); // Passe à l'étape de chargement
 
       // Les réponses du quiz à envoyer aux Vercel Functions
-      const dataToSendText = { answers: answers, quizLength: quizLength };
-      const dataToSendImage = { answers: answers };
+      const dataToSend = { answers: answers };
 
       try {
           // Appel asynchrone pour la génération de texte et d'image
@@ -97,12 +96,12 @@ const Quiz = () => {
             fetch('/api/generate-astral-result', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(dataToSendText)
+              body: JSON.stringify(dataToSend)
             }),
             fetch('/api/generate-image', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(dataToSendImage)
+              body: JSON.stringify(dataToSend)
             })
           ]);
           
@@ -472,7 +471,7 @@ const Quiz = () => {
         </div>
       );
     }
-    
+
     // Étape 4: Page de paiement simulée pour le fichier numérique
     if (step === 4) {
       return (
