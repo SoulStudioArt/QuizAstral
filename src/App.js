@@ -156,7 +156,7 @@ const Quiz = () => {
       const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${encodeURIComponent(result.imageUrl)}`;
 
       // On redirige l'utilisateur vers la page produit
-      window.open(lienFinal, '_blank');
+      window.location.href = lienFinal;
       
       // La logique suivante peut être retirée, car le lien est maintenant automatique
       // setShopifyProductLink(lienFinal); 
