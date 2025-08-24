@@ -142,16 +142,24 @@ const Quiz = () => {
     setIsDigitalUnlocked(true);
 
     if (selectedProduct.name === 'Fichier Numérique HD') {
+      // Le code pour le fichier numérique ne change pas
       setStep(4);
     } else {
-      const encodedTitle = encodeURIComponent(`"Révélation Céleste" pour ${answers.name}`);
-      const encodedBody = encodeURIComponent(`<p>${result.text}</p>`);
-      const encodedImage = encodeURIComponent(result.imageUrl.split(',')[1]);
+      // --- NOUVEAU CODE POUR LA REDIRECTION AUTOMATIQUE ---
       
-      const shopifyURL = `https://[NOM_DE_VOTRE_BOUTIQUE].myshopify.com/admin/products/new?product[title]=${encodedTitle}&product[body_html]=${encodedBody}&image[attachment]=${encodedImage}`;
+      // Le handle du produit que vous avez trouvé
+      const handleDuProduit = 'poster-astral-personnalise'; 
+      // L'URL de votre boutique
+      const boutiqueUrl = 'https://soulstudioart.com'; 
+
+      // On crée l'URL finale avec le paramètre d'image pour l'application de personnalisation
+      const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${encodeURIComponent(result.imageUrl)}`;
+
+      // On redirige l'utilisateur vers la page produit
+      window.open(lienFinal, '_blank');
       
-      window.open(shopifyURL, '_blank');
-      setShopifyProductLink(shopifyURL);
+      // La logique suivante peut être retirée, car le lien est maintenant automatique
+      // setShopifyProductLink(lienFinal); 
     }
   };
   
