@@ -29,8 +29,8 @@ const digitalDimensions = [
 
 const Quiz = () => {
   // Définition des états de l'application
-  const [step, setStep] = useState(0); // 0: choix du quiz, 1: questions, 2: chargement, 3: résultats, 4: paiement simulé
-  const [quizLength, setQuizLength] = useState(null); // 'short' ou 'long'
+  const [step, setStep] = useState(0);
+  const [quizLength, setQuizLength] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState({ text: '', imageUrl: '' });
