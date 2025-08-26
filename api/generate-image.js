@@ -1,5 +1,4 @@
 import fetch from 'node-fetch';
-import { put } from '@vercel/blob';
 
 export default async function (req, res) {
   if (req.method !== 'POST') {
@@ -36,20 +35,7 @@ export default async function (req, res) {
 
     const resultImage = await responseImage.json();
     const base64Data = resultImage?.predictions?.[0]?.bytesBase64Encoded;
-
-    if (!base64Data) {
-      return res.status(500).json({ error: 'L\'API n\'a pas retourné de données d\'image valides.' });
-    }
-
-    // --- NOUVEAU CODE POUR L'ENVOI DE L'IMAGE ---
-    const imageBuffer = Buffer.from(base64Data, 'base64');
-    const filename = `revelation-celeste-${Date.now()}.png`;
-
-    const { url: imageUrl } = await put(filename, imageBuffer, {
-      access: 'public',
-      token: process.env.BLOB_READ_WRITE_TOKEN
-    });
-    // --- FIN DU NOUVEAU CODE ---
+    const imageUrl = base64Data ? `data:image/png;base64,${base64Data}` : null;
 
     res.status(200).json({ imageUrl });
 
