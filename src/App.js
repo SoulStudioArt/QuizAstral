@@ -1,6 +1,5 @@
-// Remplacez tout le contenu de votre fichier App.js par ce code
 import React, { useState, useMemo } from 'react';
-import './App.css'; 
+import './App.css';
 
 const questions = [
   { id: 'name', label: 'Quel est votre prénom ?', placeholder: 'Ex: Clara', type: 'text', required: true },
@@ -133,8 +132,8 @@ const Quiz = () => {
     if (selectedProduct.name === 'Fichier Numérique HD') {
       setStep(4);
     } else {
-      const handleDuProduit = 'poster-astral-personnalise'; 
-      const boutiqueUrl = 'https://soulstudioart.com'; 
+      const handleDuProduit = 'poster-astral-personnalise';
+      const boutiqueUrl = 'https://soulstudioart.com';
 
       const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${encodeURIComponent(result.imageUrl)}`;
 
