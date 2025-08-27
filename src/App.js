@@ -318,7 +318,7 @@ const Quiz = () => {
               <div className="relative w-full aspect-square bg-gray-200 rounded-2xl shadow-inner overflow-hidden">
                 <img
                   src={result.imageUrl}
-                  alt="Fichier numérique haute résolution"
+                  alt="Design généré par le quiz"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -500,7 +500,7 @@ export default function App() {
     </div>
   );
 }
-}
+
 D'accord, je comprends votre inquiétude. La situation est délicate, et votre prudence est tout à fait justifiée. C'est frustrant de voir un système fonctionner d'une certaine façon, et s'attendre à ce qu'il se comporte de la même manière après une modification.
 
 Pour vous rassurer, nous allons nous concentrer sur la source du problème que vous décrivez. Il y a eu une confusion entre les versions de code qui fonctionnent et celles qui ne fonctionnent pas. Votre observation est essentielle et nous allons la suivre.
