@@ -1,7 +1,7 @@
+// Remplacez tout le contenu de votre fichier App.js par ce code
 import React, { useState, useMemo } from 'react';
-import './App.css'; // Importez le fichier CSS ici
+import './App.css'; 
 
-// Définition des questions du quiz
 const questions = [
   { id: 'name', label: 'Quel est votre prénom ?', placeholder: 'Ex: Clara', type: 'text', required: true },
   { id: 'birthDate', label: 'Quelle est votre date de naissance ?', type: 'date', required: true },
@@ -12,7 +12,6 @@ const questions = [
   { id: 'lifeLesson', label: 'Quelle est la plus grande leçon de vie que vous ayez apprise ?', placeholder: 'Ex: La patience est une vertu', type: 'textarea' },
 ];
 
-// Définition des produits
 const products = [
   { name: 'Fichier Numérique HD', price: '1,99', mockupUrl: 'https://placehold.co/600x600/E5E7EB/gray?text=Fichier+Numérique' },
   { name: 'Affiche', price: '35,00', mockupUrl: 'https://placehold.co/600x600/F5F5F5/gray?text=Affiche+Mockup' },
@@ -20,7 +19,6 @@ const products = [
   { name: 'T-shirt', price: '28,00', mockupUrl: 'https://placehold.co/600x600/F5F5F5/gray?text=T-shirt+Mockup' },
 ];
 
-// Définition des dimensions pour le produit numérique
 const digitalDimensions = [
   { name: 'Fond d\'écran mobile', size: '1080x1920' },
   { name: 'Impression A4', size: '2480x3508' },
@@ -28,7 +26,6 @@ const digitalDimensions = [
 ];
 
 const Quiz = () => {
-  // Définition des états de l'application
   const [step, setStep] = useState(0);
   const [quizLength, setQuizLength] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -42,7 +39,6 @@ const Quiz = () => {
   const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   
-  // Sépare le texte en deux moitiés pour le "gating"
   const splitText = useMemo(() => {
     if (!result.text) return { firstHalf: '', secondHalf: '' };
     const midpoint = Math.floor(result.text.length / 2);
@@ -58,13 +54,11 @@ const Quiz = () => {
     return { firstHalf, secondHalf };
   }, [result.text]);
   
-  // Fonction pour gérer les changements dans le formulaire
   const handleChange = (e) => {
     const { name, value } = e.target;
     setAnswers((prevAnswers) => ({ ...prevAnswers, [name]: value }));
   };
 
-  // Fonction pour passer à la question suivante
   const handleNextQuestion = () => {
     const maxQuestions = quizLength === 'short' ? 3 : 7;
     const currentQuestion = questions[currentQuestionIndex];
@@ -76,22 +70,18 @@ const Quiz = () => {
     setCurrentQuestionIndex(currentQuestionIndex + 1);
   };
 
-  // Fonction pour revenir à la question précédente
   const handlePreviousQuestion = () => {
     setError('');
     setCurrentQuestionIndex(currentQuestionIndex - 1);
   };
 
-  // Fonction pour lancer la génération de la révélation (texte et image)
   const handleSubmit = async () => {
       setLoading(true);
-      setStep(2); // Passe à l'étape de chargement
+      setStep(2);
 
-      // Les réponses du quiz à envoyer aux Vercel Functions
       const dataToSend = { answers: answers };
 
       try {
-          // Appel asynchrone pour la génération de texte et d'image
           const [textResponse, imageResponse] = await Promise.all([
             fetch('/api/generate-astral-result', {
               method: 'POST',
@@ -128,11 +118,10 @@ const Quiz = () => {
           setError(e.message || "Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
       } finally {
           setLoading(false);
-          setStep(3); // Passe à l'étape des résultats
+          setStep(3);
       }
   };
   
-  // Fonction pour gérer l'action du produit
   const handleProductAction = () => {
     if (!result.imageUrl) {
       setError('Impossible d\'effectuer cette action sans l\'image.');
@@ -142,28 +131,17 @@ const Quiz = () => {
     setIsDigitalUnlocked(true);
 
     if (selectedProduct.name === 'Fichier Numérique HD') {
-      // Le code pour le fichier numérique ne change pas
       setStep(4);
     } else {
-      // --- NOUVEAU CODE POUR LA REDIRECTION AUTOMATIQUE ---
-      
-      // Le handle du produit que vous avez trouvé
       const handleDuProduit = 'poster-astral-personnalise'; 
-      // L'URL de votre boutique
       const boutiqueUrl = 'https://soulstudioart.com'; 
 
-      // On crée l'URL finale avec le paramètre d'image pour l'application de personnalisation
       const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${encodeURIComponent(result.imageUrl)}`;
 
-      // On redirige l'utilisateur vers la page produit
       window.location.href = lienFinal;
-      
-      // La logique suivante peut être retirée, car le lien est maintenant automatique
-      // setShopifyProductLink(lienFinal); 
     }
   };
   
-  // Fonction pour copier le lien dans le presse-papiers
   const copyToClipboard = () => {
     const el = document.createElement('textarea');
     el.value = shopifyProductLink;
@@ -175,7 +153,6 @@ const Quiz = () => {
     setTimeout(() => setCopyStatus(''), 2000);
   };
   
-  // Fonction pour télécharger le fichier après la "simulation de paiement"
   const handleDownload = () => {
     const link = document.createElement('a');
     link.href = result.imageUrl;
@@ -187,9 +164,7 @@ const Quiz = () => {
     setStep(3);
   };
 
-  // Rendu des différentes étapes du quiz
   const renderContent = () => {
-    // Étape 0: Choix du quiz
     if (step === 0) {
       return (
         <div className="text-center space-y-8">
@@ -216,7 +191,6 @@ const Quiz = () => {
       );
     }
 
-    // Étape 1: Questions
     if (step === 1) {
       const maxQuestions = quizLength === 'short' ? 3 : 7;
       const currentQuestion = questions[currentQuestionIndex];
@@ -278,7 +252,6 @@ const Quiz = () => {
       );
     }
 
-    // Étape 2: Chargement
     if (step === 2) {
       return (
         <div className="flex flex-col items-center justify-center p-8 space-y-4 text-center">
@@ -289,7 +262,6 @@ const Quiz = () => {
       );
     }
 
-    // Étape 3: Résultats avec visualisation et texte tronqué ou complet
     if (step === 3) {
       const renderProductVisualization = () => {
         if (!result.imageUrl) {
@@ -361,7 +333,6 @@ const Quiz = () => {
             Votre Révélation Céleste, {answers.name || 'Cher Voyageur'}
           </h2>
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Colonne du texte */}
             <div className="lg:w-2/3 space-y-6">
               <div className="p-6 bg-gray-50 rounded-xl shadow-inner">
                 <h3 className="text-2xl font-bold text-indigo-900 mb-4">Votre Voyage Astral</h3>
@@ -378,7 +349,6 @@ const Quiz = () => {
                 )}
               </div>
             </div>
-            {/* Colonne de visualisation et d'options */}
             <div className="lg:w-1/3 space-y-4">
               <h3 className="text-3xl font-serif font-bold text-indigo-900">Votre Œuvre d'Art Unique</h3>
               {renderProductVisualization()}
@@ -480,7 +450,6 @@ const Quiz = () => {
       );
     }
 
-    // Étape 4: Page de paiement simulée pour le fichier numérique
     if (step === 4) {
       return (
         <div className="text-center space-y-6">
@@ -532,3 +501,20 @@ export default function App() {
     </div>
   );
 }
+}
+D'accord, je comprends votre inquiétude. La situation est délicate, et votre prudence est tout à fait justifiée. C'est frustrant de voir un système fonctionner d'une certaine façon, et s'attendre à ce qu'il se comporte de la même manière après une modification.
+
+Pour vous rassurer, nous allons nous concentrer sur la source du problème que vous décrivez. Il y a eu une confusion entre les versions de code qui fonctionnent et celles qui ne fonctionnent pas. Votre observation est essentielle et nous allons la suivre.
+
+### Le Problème de Décalage
+Le problème que vous décrivez est un "décalage" entre vos fichiers. Chaque fois que vous essayez d'utiliser le code modifié de `generate-image.js` avec la version que vous me donnez de `App.js`, une erreur se produit, car les deux fichiers ne sont pas cohérents.
+
+Pour résoudre ce problème une bonne fois pour toutes, vous devez avoir des fichiers qui fonctionnent ensemble. Pour l'instant, je vous recommande de revenir à la version de `App.js` qui fonctionnait avant que nous fassions des modifications.
+
+### La Solution
+Nous allons rétablir votre `App.js` à une version qui est compatible avec la version de `generate-image.js` qui ne fonctionne pas, puis nous allons corriger `generate-image.js` pour qu'il renvoie le bon format de lien.
+
+Je vais vous donner le code complet de `App.js` qui est compatible avec le code `generate-image.js` qui ne fonctionne pas.
+
+```javascript
+// This is the App.js code
