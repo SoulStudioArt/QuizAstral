@@ -1,5 +1,6 @@
+// Remplacez tout le contenu de votre fichier App.js par ce code
 import React, { useState, useMemo } from 'react';
-import './App.css';
+import './App.css'; 
 
 const questions = [
   { id: 'name', label: 'Quel est votre prénom ?', placeholder: 'Ex: Clara', type: 'text', required: true },
