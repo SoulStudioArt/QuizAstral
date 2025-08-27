@@ -158,7 +158,7 @@ const Quiz = () => {
     link.download = `RevelationCeleste_${answers.name}_${selectedDimension.name}.png`;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(el);
+    document.body.removeChild(link); // CORRECTION HERE
 
     setStep(3);
   };
