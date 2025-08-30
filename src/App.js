@@ -137,7 +137,7 @@ const Quiz = () => {
 
       const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${encodeURIComponent(result.imageUrl)}`;
 
-      window.location.href = lienFinal;
+      window.top.location.href = lienFinal;
     }
   };
   
