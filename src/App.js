@@ -11,6 +11,7 @@ const questions = [
   { id: 'lifeLesson', label: 'Quelle est la plus grande leçon de vie que vous ayez apprise ?', placeholder: 'Ex: La patience est une vertu', type: 'textarea' },
 ];
 
+// Corrigé: La liste des produits inclut de nouveau Affiche et les autres options
 const products = [
   { name: 'Fichier Numérique HD', price: '1,99', mockupUrl: 'https://placehold.co/600x600/E5E7EB/gray?text=Fichier+Numérique' },
   { name: 'Affiche', price: '35,00', mockupUrl: 'https://placehold.co/600x600/F5F5F5/gray?text=Affiche+Mockup' },
@@ -132,7 +133,8 @@ const Quiz = () => {
     if (selectedProduct.name === 'Fichier Numérique HD') {
       setStep(4);
     } else {
-      const handleDuProduit = 'matte-canvas-wall-art-modern-decor-minimalist-artwork-home-wall-decor-clean-aesthetic-gallery-style-print';
+      // Corrigé: Utilisation du handle correct et simplifié
+      const handleDuProduit = 'mystical-eye-mandala-canvas-art';
       const boutiqueUrl = 'https://soulstudioart.com';
 
       const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${encodeURIComponent(result.imageUrl)}`;
