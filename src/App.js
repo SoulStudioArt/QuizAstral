@@ -132,7 +132,7 @@ const Quiz = () => {
     if (selectedProduct.name === 'Fichier Numérique HD') {
       setStep(4);
     } else {
-      const handleDuProduit = 'matte-canvas-wall-art-modern-decor-minimalist-artwork-home-wall-decor-clean-aesthetic-gallery-style-print';
+      const handleDuProduit = 'poster-astral-personnalise';
       const boutiqueUrl = 'https://soulstudioart.com';
 
       const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${encodeURIComponent(result.imageUrl)}`;
@@ -158,7 +158,7 @@ const Quiz = () => {
     link.download = `RevelationCeleste_${answers.name}_${selectedDimension.name}.png`;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link); // CORRECTION HERE
+    document.body.removeChild(link);
 
     setStep(3);
   };
