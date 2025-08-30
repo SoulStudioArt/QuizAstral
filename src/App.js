@@ -132,7 +132,7 @@ const Quiz = () => {
     if (selectedProduct.name === 'Fichier Numérique HD') {
       setStep(4);
     } else {
-      const handleDuProduit = 'poster-astral-personnalise';
+      const handleDuProduit = 'matte-canvas-wall-art-modern-decor-minimalist-artwork-home-wall-decor-clean-aesthetic-gallery-style-print';
       const boutiqueUrl = 'https://soulstudioart.com';
 
       const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${encodeURIComponent(result.imageUrl)}`;
