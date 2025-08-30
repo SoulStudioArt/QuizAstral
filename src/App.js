@@ -134,7 +134,7 @@ const Quiz = () => {
       setStep(4);
     } else {
       // Corrigé: Utilisation du handle correct et simplifié
-      const handleDuProduit = 'mystical-eye-mandala-canvas-art';
+      const handleDuProduit = 'mystical-eye-mandala-canvas-art-1';
       const boutiqueUrl = 'https://soulstudioart.com';
 
       const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${encodeURIComponent(result.imageUrl)}`;
