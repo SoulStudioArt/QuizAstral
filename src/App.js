@@ -130,7 +130,6 @@ const Quiz = () => {
       }
   };
   
-  // Fonction restaurée à la version originale
   const handleProductAction = async () => {
     if (!result.imageUrl) {
       setError('Impossible d\'effectuer cette action sans l\'image.');
