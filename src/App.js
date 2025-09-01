@@ -130,6 +130,7 @@ const Quiz = () => {
       }
   };
   
+  // Fonction modifiée pour l'ajout au panier
   const handleProductAction = async () => {
     if (!result.imageUrl) {
       setError('Impossible d\'effectuer cette action sans l\'image.');
@@ -141,11 +142,48 @@ const Quiz = () => {
     if (selectedProduct.name === 'Fichier Numérique HD') {
       setStep(4);
     } else {
-      const handleDuProduit = 'mystical-eye-mandala-canvas-art-1';
-      const boutiqueUrl = 'https://soulstudioart.com';
-      const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${result.imageUrl}`;
-      
-      window.top.location.href = lienFinal;
+        // Remplacez 'votre_variant_id' par l'ID réel de la variante de ton produit sur Shopify
+        const productVariantId = 'votre_variant_id'; 
+        
+        setLoading(true);
+
+        try {
+            const data = {
+                items: [{
+                    id: productVariantId,
+                    quantity: 1,
+                    // Ajout de l'URL de l'image comme propriété de ligne
+                    properties: {
+                        'custom_image_url': result.imageUrl
+                    }
+                }]
+            };
+
+            const response = await fetch('/cart/add.js', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Erreur lors de l'ajout au panier : ${errorText}`);
+            }
+
+            const cart = await response.json();
+            console.log('Produit ajouté au panier avec la propriété d\'image !', cart);
+            
+            // Redirection vers la page de paiement
+            window.top.location.href = '/checkout';
+
+        } catch (e) {
+            console.error("Erreur lors de l'ajout au panier :", e);
+            setError("Désolé, une erreur est survenue lors de l'ajout au panier. Veuillez réessayer.");
+        } finally {
+            setLoading(false);
+        }
     }
   };
 
@@ -411,10 +449,10 @@ const Quiz = () => {
                 ) : (
                   <button
                     onClick={handleProductAction}
-                    disabled={!result.imageUrl}
-                    className={`w-full py-4 bg-indigo-600 text-white text-xl font-bold rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 ${!result.imageUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={!result.imageUrl || loading}
+                    className={`w-full py-4 bg-indigo-600 text-white text-xl font-bold rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 ${!result.imageUrl || loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    Créer le produit sur Shopify
+                    {loading ? 'Ajout en cours...' : 'Ajouter au panier'}
                   </button>
                 )}
                 
@@ -436,7 +474,6 @@ const Quiz = () => {
                       className="absolute top-1 right-1 p-1 rounded-full bg-indigo-200 text-indigo-600 hover:bg-indigo-300"
                       title="Copier le lien"
                     >
-                      {/* SVG pour l'icône de copie */}
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2.25M12 9l-3 3m0 0l3 3m-3-3h6" />
                       </svg>
