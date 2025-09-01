@@ -273,7 +273,6 @@ const Quiz = () => {
           return <p className="text-gray-500">Image en cours de chargement...</p>;
         }
         
-        // MODIFIÉ : Utilisation de l'URL de l'image de base ici
         switch (selectedProduct.name) {
           case 'Affiche':
             return (
