@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import './App.css';
 
 const questions = [
@@ -37,6 +37,20 @@ const Quiz = () => {
   const [shopifyProductLink, setShopifyProductLink] = useState('');
   const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
+  
+  // NOUVEAU : État pour l'URL de l'image de base (le canevas)
+  const [canvasImageUrl, setCanvasImageUrl] = useState('');
+
+  // AJOUTÉ : Utilisation de useEffect pour lire l'URL et mettre à jour l'état
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const imageFromUrl = urlParams.get('image_url');
+    if (imageFromUrl) {
+      setResult(prev => ({ ...prev, imageUrl: imageFromUrl }));
+      // Déplacez le quiz vers l'étape de visualisation directement
+      setStep(3);
+    }
+  }, []);
   
   const splitText = useMemo(() => {
     if (!result.text) return { firstHalf: '', secondHalf: '' };
@@ -121,7 +135,7 @@ const Quiz = () => {
       }
   };
   
-  const handleProductAction = () => {
+  const handleProductAction = async () => {
     if (!result.imageUrl) {
       setError('Impossible d\'effectuer cette action sans l\'image.');
       return;
@@ -132,13 +146,63 @@ const Quiz = () => {
     if (selectedProduct.name === 'Fichier Numérique HD') {
       setStep(4);
     } else {
-      // CORRECTED: The encodeURIComponent has been removed
+      // ÉTAPE 1: L'APERÇU
+      // Ici, on redirige vers la page du produit. L'aperçu est géré par le script que nous avons mis
+      // dans main-product.liquid, qui lit le paramètre 'image_url'
       const handleDuProduit = 'mystical-eye-mandala-canvas-art-1';
       const boutiqueUrl = 'https://soulstudioart.com';
-
       const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${result.imageUrl}`;
-
+      
       window.top.location.href = lienFinal;
+    }
+  };
+
+  // NOUVEAU: Fonction pour l'ajout au panier. Elle est déclenchée après la redirection.
+  const handleAddToCart = async () => {
+    if (!result.imageUrl) {
+        setError('Impossible d\'ajouter au panier sans l\'image.');
+        return;
+    }
+
+    const handleDuProduit = 'mystical-eye-mandala-canvas-art-1';
+    const boutiqueUrl = 'https://soulstudioart.com';
+    
+    // Création de l'objet de propriétés de la ligne de commande
+    const properties = {
+        'Design personnalisé': result.imageUrl,
+    };
+
+    // Création de la requête pour ajouter au panier
+    const cartAddUrl = `${boutiqueUrl}/cart/add.js`;
+    const productData = {
+        items: [
+            {
+                product_handle: handleDuProduit,
+                quantity: 1,
+                properties: properties
+            }
+        ]
+    };
+    
+    // Envoi de la requête à Shopify pour ajouter le produit au panier
+    try {
+        const response = await fetch(cartAddUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(productData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de l\'ajout au panier');
+        }
+
+        const data = await response.json();
+        // Redirige le client vers la page du panier
+        window.top.location.href = `${boutiqueUrl}/cart`;
+
+    } catch (error) {
+        console.error("Erreur lors de l'ajout au panier:", error);
+        setError("Désolé, une erreur est survenue lors de l'ajout du produit au panier.");
     }
   };
   
@@ -165,6 +229,7 @@ const Quiz = () => {
   };
 
   const renderContent = () => {
+    // ... votre code de rendu pour les étapes 0, 1 et 2 reste inchangé
     if (step === 0) {
       return (
         <div className="text-center space-y-8">
@@ -190,7 +255,6 @@ const Quiz = () => {
         </div>
       );
     }
-
     if (step === 1) {
       const maxQuestions = quizLength === 'short' ? 3 : 7;
       const currentQuestion = questions[currentQuestionIndex];
@@ -251,7 +315,6 @@ const Quiz = () => {
         </div>
       );
     }
-
     if (step === 2) {
       return (
         <div className="flex flex-col items-center justify-center p-8 space-y-4 text-center">
@@ -268,6 +331,7 @@ const Quiz = () => {
           return <p className="text-gray-500">Image en cours de chargement...</p>;
         }
         
+        // MODIFIÉ : Utilisation de l'URL de l'image de base ici
         switch (selectedProduct.name) {
           case 'Affiche':
             return (
