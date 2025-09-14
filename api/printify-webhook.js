@@ -1,68 +1,61 @@
 import crypto from 'crypto';
 import fetch from 'node-fetch';
-import getRawBody from 'raw-body'; // Make sure this is installed: npm install raw-body
+import getRawBody from 'raw-body';
 
 export default async function (req, res) {
-  // Check if the HTTP method is POST
+  // Vérification de la méthode HTTP
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
-  // Get the HMAC header and the secret key from Vercel's environment variables
+  // Validation du webhook Shopify pour des raisons de sécurité
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
-  // If the secret or the header is missing, return an authentication error
   if (!hmacHeader || !shopifyWebhookSecret) {
     console.error('Webhook secret ou header HMAC manquant.');
     return res.status(401).json({ message: 'Erreur d\'authentification: Clé secrète ou header manquant.' });
   }
   
-  // Read the raw request body as a buffer. This is the most reliable way to validate webhooks.
   const rawBody = await getRawBody(req);
   
-  // Calculate the HMAC hash of the raw body
   const hmac = crypto.createHmac('sha256', shopifyWebhookSecret)
     .update(rawBody)
     .digest('base64');
 
-  // Compare the calculated hash with the one from Shopify
   if (hmac !== hmacHeader) {
     console.error('Hachage du webhook non valide.');
     return res.status(401).json({ message: 'Hachage du webhook non valide.' });
   }
   
-  // If validation is successful, process the order
   try {
-    const order = JSON.parse(rawBody.toString('utf8')); // Parse the raw body as JSON
+    const order = JSON.parse(rawBody.toString('utf8'));
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     const printifyProductId = process.env.PRINTIFY_PRODUCT_ID;
     const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
-    
-    // Check for missing Printify environment variables
+
     if (!printifyApiKey || !printifyStoreId || !printifyProductId || !printifyVariantId) {
       console.error('Variables d\'environnement Printify manquantes.');
       return res.status(500).json({ error: 'Configuration Printify incomplète.' });
     }
 
-    // Find the custom image URL in the order properties
     let imageUrl = null;
-    const mainProductItem = order.line_items.find(item => 
-      item.properties.custom_image_url
-    );
+    const productItem = order.line_items.find(item => item.properties.length > 0);
 
-    if (mainProductItem) {
-      imageUrl = mainProductItem.properties.custom_image_url;
+    if (productItem) {
+      const customImageProperty = productItem.properties.find(prop => prop.name === 'custom_image_url');
+      if (customImageProperty) {
+        imageUrl = customImageProperty.value;
+      }
     }
 
     if (!imageUrl) {
       console.warn('Aucune URL d\'image personnalisée trouvée pour la commande:', order.order_number);
-      // Return a 200 OK status, as no action is needed for Printify
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
-
-    // Upload the image to Printify
+    
+    // Suite du code pour l'upload et la création de la commande Printify
     const uploadPayload = {
       file_name: `revelation-celeste-${order.id}.png`,
       url: imageUrl,
@@ -85,13 +78,12 @@ export default async function (req, res) {
 
     const uploadData = await uploadResponse.json();
 
-    // Create the Printify Draft Order
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
         {
           product_id: printifyProductId,
-          quantity: mainProductItem.quantity,
+          quantity: productItem.quantity,
           variant_id: printifyVariantId,
           print_provider_id: "PLACEHOLDER_PROVIDER_ID", 
           print_details: [
@@ -120,7 +112,6 @@ export default async function (req, res) {
       return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.' });
     }
     
-    // If the order is created, return a success response
     res.status(200).json({ message: 'Brouillon de commande Printify créé avec succès.', orderId: order.id });
 
   } catch (error) {
