@@ -9,6 +9,7 @@
     "@testing-library/user-event": "^13.5.0",
     "@vercel/blob": "^1.1.1",
     "node-fetch": "^3.3.2",
+    "raw-body": "^3.0.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-scripts": "5.0.1",
