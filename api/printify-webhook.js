@@ -34,8 +34,9 @@ export default async function (req, res) {
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     const printifyProductId = process.env.PRINTIFY_PRODUCT_ID;
     const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
+    const printifyPrintProviderId = 35; // L'ID pour le fournisseur Jondo
 
-    if (!printifyApiKey || !printifyStoreId || !printifyProductId || !printifyVariantId) {
+    if (!printifyApiKey || !printifyStoreId || !printifyProductId || !printifyVariantId || !printifyPrintProviderId) {
       console.error('Variables d\'environnement Printify manquantes.');
       return res.status(500).json({ error: 'Configuration Printify incomplète.' });
     }
@@ -77,7 +78,9 @@ export default async function (req, res) {
     }
 
     const uploadData = await uploadResponse.json();
+    const blueprintId = uploadData.id;
 
+    // Création d'un "Draft Order" avec le "Blueprint"
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -85,16 +88,16 @@ export default async function (req, res) {
           product_id: printifyProductId,
           quantity: productItem.quantity,
           variant_id: printifyVariantId,
-          print_provider_id: "PLACEHOLDER_PROVIDER_ID", 
+          print_provider_id: printifyPrintProviderId,
           print_details: [
             {
-              placement: "front", 
-              image_url: uploadData.url, 
+              placement: "front",
+              blueprint_id: blueprintId,
             },
           ]
         }
       ],
-      shipping_method: "STANDARD" 
+      shipping_method: 1 // 1 pour l'expédition Standard
     };
 
     const printifyResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/orders.json`, {
