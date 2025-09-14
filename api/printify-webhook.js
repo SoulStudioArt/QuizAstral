@@ -92,7 +92,7 @@ export default async function (req, res) {
           print_details: [
             {
               placement: "front",
-              blueprint_id: blueprintId,
+              blueprint_id: blueprintId, // L'ID du Blueprint est maintenant utilisé
             },
           ]
         }
