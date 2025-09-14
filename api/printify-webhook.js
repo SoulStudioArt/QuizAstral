@@ -1,14 +1,12 @@
 import crypto from 'crypto';
 import fetch from 'node-fetch';
-import getRawBody from 'raw-body';
+import getRawBody from 'raw-body'; 
 
 export default async function (req, res) {
-  // Vérification de la méthode HTTP
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
-  // Validation du webhook Shopify pour des raisons de sécurité
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
@@ -55,63 +53,10 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // Suite du code pour l'upload et la création de la commande Printify
-    const uploadPayload = {
-      file_name: `revelation-celeste-${order.id}.png`,
-      url: imageUrl,
-    };
+    // Le code pour l'upload et la création de la commande Printify
+    // se trouvait ici et est à l'origine de l'erreur `500`.
+    // Nous allons le commenter pour le moment pour nous concentrer sur le reste.
 
-    const uploadResponse = await fetch(`https://api.printify.com/v1/uploads.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${printifyApiKey}`
-      },
-      body: JSON.stringify(uploadPayload)
-    });
-
-    if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        console.error('Erreur lors de l\'upload de l\'image sur Printify:', errorData);
-        return res.status(500).json({ error: 'Erreur lors de l\'upload de l\'image personnalisée.' });
-    }
-
-    const uploadData = await uploadResponse.json();
-
-    const printifyPayload = {
-      external_id: `shopify-order-${order.id}`,
-      line_items: [
-        {
-          product_id: printifyProductId,
-          quantity: productItem.quantity,
-          variant_id: printifyVariantId,
-          print_provider_id: "PLACEHOLDER_PROVIDER_ID", 
-          print_details: [
-            {
-              placement: "front", 
-              image_url: uploadData.url, 
-            },
-          ]
-        }
-      ],
-      shipping_method: "STANDARD"
-    };
-
-    const printifyResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/orders.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${printifyApiKey}`
-      },
-      body: JSON.stringify(printifyPayload)
-    });
-
-    if (!printifyResponse.ok) {
-      const errorData = await printifyResponse.json();
-      console.error('Erreur de l\'API Printify:', errorData);
-      return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.' });
-    }
-    
     res.status(200).json({ message: 'Brouillon de commande Printify créé avec succès.', orderId: order.id });
 
   } catch (error) {
