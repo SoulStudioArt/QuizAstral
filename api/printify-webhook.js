@@ -3,10 +3,12 @@ import fetch from 'node-fetch';
 import getRawBody from 'raw-body';
 
 export default async function (req, res) {
+  // Vérification de la méthode HTTP
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
+  // Validation du webhook Shopify pour des raisons de sécurité
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
@@ -53,12 +55,13 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
+    // Correction de l'endpoint pour le téléchargement d'images
     const uploadPayload = {
       file_name: `revelation-celeste-${order.id}.png`,
       url: imageUrl,
     };
 
-    const uploadResponse = await fetch(`https://api.printify.com/v1/uploads.json`, {
+    const uploadResponse = await fetch(`https://api.printify.com/v1/uploads/images.json`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
