@@ -3,10 +3,12 @@ import fetch from 'node-fetch';
 import getRawBody from 'raw-body';
 
 export default async function (req, res) {
+  // Vérification de la méthode HTTP
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
+  // Validation du webhook Shopify pour des raisons de sécurité
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
@@ -54,13 +56,11 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // Étape 1: Téléverser l'image sur Printify
+    // Correction de l'endpoint pour le téléchargement d'images
     const uploadPayload = {
       file_name: `revelation-celeste-${order.id}.png`,
       url: imageUrl,
     };
-    // Débogage de la requête de téléversement
-    console.log('Payload de l\'upload d\'image:', JSON.stringify(uploadPayload, null, 2));
 
     const uploadResponse = await fetch(`https://api.printify.com/v1/uploads/images.json`, {
       method: 'POST',
@@ -80,7 +80,7 @@ export default async function (req, res) {
     const uploadData = await uploadResponse.json();
     const blueprintId = uploadData.id;
 
-    // Étape 2: Créer un "Draft Order" avec le "Blueprint"
+    // Création d'un "Draft Order" avec le "Blueprint"
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -97,10 +97,8 @@ export default async function (req, res) {
           ]
         }
       ],
-      shipping_method: 1
+      shipping_method: 1 // 1 pour l'expédition Standard
     };
-    // Débogage de la requête de création de commande
-    console.log('Payload de la création de commande:', JSON.stringify(printifyPayload, null, 2));
 
     const printifyResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/orders.json`, {
       method: 'POST',
@@ -112,7 +110,7 @@ export default async function (req, res) {
     });
 
     if (!printifyResponse.ok) {
-      const errorData = await printifyResponse.json();
+      const errorData = await uploadResponse.json();
       console.error('Erreur de l\'API Printify:', errorData);
       return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.' });
     }
