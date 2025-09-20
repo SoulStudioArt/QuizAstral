@@ -77,6 +77,7 @@ export default async function (req, res) {
     }
 
     const uploadData = await uploadResponse.json();
+    console.log('Données de l\'upload de l\'image de Printify:', uploadData);
     const blueprintId = uploadData.id;
 
     const printifyPayload = {
@@ -108,7 +109,7 @@ export default async function (req, res) {
     });
 
     if (!printifyResponse.ok) {
-      const errorData = await **printifyResponse.json()**;
+      const errorData = await printifyResponse.json();
       console.error('Erreur de l\'API Printify:', errorData);
       return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.' });
     }
