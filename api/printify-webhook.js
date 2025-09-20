@@ -80,6 +80,9 @@ export default async function (req, res) {
     const uploadData = await uploadResponse.json();
     const blueprintId = uploadData.id;
 
+    // Ajout d'un console.log pour déboguer le blueprint_id
+    console.log('Données de l\'upload de l\'image de Printify:', uploadData); 
+
     // Création d'un "Draft Order" avec le "Blueprint"
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
