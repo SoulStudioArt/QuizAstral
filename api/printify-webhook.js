@@ -77,13 +77,7 @@ export default async function (req, res) {
     }
 
     const uploadData = await uploadResponse.json();
-    console.log('Données de l\'upload de l\'image de Printify:', uploadData);
     const blueprintId = uploadData.id;
-
-    if (!blueprintId) {
-      console.error('Erreur: Printify a renvoyé une réponse sans ID de blueprint pour l\'image.');
-      return res.status(500).json({ error: 'Erreur lors de la récupération de l\'ID de l\'image personnalisée.' });
-    }
 
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
