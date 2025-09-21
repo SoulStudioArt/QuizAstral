@@ -56,31 +56,9 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // Étape 1: Téléchargez l'image sur Printify.
-    const uploadPayload = {
-      file_name: `revelation-celeste-${order.id}.png`,
-      url: imageUrl,
-    };
-    
-    const uploadResponse = await fetch(`https://api.printify.com/v1/uploads/images.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${printifyApiKey}`
-      },
-      body: JSON.stringify(uploadPayload)
-    });
-
-    const uploadData = await uploadResponse.json();
-    
-    if (!uploadResponse.ok || !uploadData.id) {
-        console.error('Erreur lors de l\'upload de l\'image sur Printify:', uploadData);
-        return res.status(500).json({ error: 'Erreur lors de l\'upload de l\'image personnalisée.', details: uploadData });
-    }
-
-    const uploadedImageId = uploadData.id;
-
-    // Étape 2: Créez un "Draft Order" en utilisant l'ID de l'image téléchargée.
+    // Étape 1: Créer un "Draft Order" en utilisant l'URL de l'image.
+    // L'API Printify pour la création d'une commande personnalisée via 'print_areas'
+    // attend un URL dans le champ 'src' et non un ID d'image.
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -96,7 +74,7 @@ export default async function (req, res) {
                   position: "front",
                   images: [
                     {
-                      id: uploadedImageId, // Référencez l'image par son ID.
+                      src: imageUrl, // Utilisez l'URL de l'image originale ici.
                       x: 0.5,
                       y: 0.5,
                       scale: 1,
