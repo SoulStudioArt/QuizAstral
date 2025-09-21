@@ -56,7 +56,7 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // Step 1: Télécharger l'image sur Printify.
+    // Step 1: Upload the image to Printify.
     const uploadPayload = {
       file_name: `revelation-celeste-${order.id}.png`,
       url: imageUrl,
@@ -80,7 +80,9 @@ export default async function (req, res) {
 
     const uploadedImageId = uploadData.id;
 
-    // Step 2: Créer un "Draft Order" en utilisant l'ID de l'image téléchargée.
+    // Step 2: Create a "Draft Order" using the uploaded image ID.
+    // The previous error was due to a confusion in the payload structure.
+    // The correct approach is to reference the uploaded image's ID.
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -88,7 +90,7 @@ export default async function (req, res) {
           product_id: printifyProductId,
           quantity: productItem.quantity,
           variant_id: printifyVariantId,
-          // Nous avons retiré la ligne print_provider_id: 35 pour résoudre le problème
+          print_provider_id: 35, // This field is required to specify the print provider (Jondo).
           print_areas: [
             {
               variant_ids: [printifyVariantId],
@@ -97,7 +99,7 @@ export default async function (req, res) {
                   position: "front",
                   images: [
                     {
-                      id: uploadedImageId, // Référencez l'image par son ID.
+                      id: uploadedImageId, // Reference the image by its ID.
                       x: 0.5,
                       y: 0.5,
                       scale: 1,
