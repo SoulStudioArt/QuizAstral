@@ -56,8 +56,32 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // The previous error messages were misleading.
-    // The API expects a direct URL for the image, along with all the placement fields.
+    // Étape 1: Tentez le téléchargement de l'image sur Printify.
+    const uploadPayload = {
+      file_name: `revelation-celeste-${order.id}.png`,
+      url: imageUrl,
+    };
+    
+    const uploadResponse = await fetch(`https://api.printify.com/v1/uploads/images.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${printifyApiKey}`
+      },
+      body: JSON.stringify(uploadPayload)
+    });
+
+    const uploadData = await uploadResponse.json();
+    
+    if (!uploadResponse.ok || !uploadData.id) {
+        console.error('Erreur lors de l\'upload de l\'image sur Printify:', uploadData);
+        // Arrêtez le processus ici si le téléchargement échoue.
+        return res.status(500).json({ error: 'Erreur lors de l\'upload de l\'image personnalisée.', details: uploadData });
+    }
+
+    const uploadedImageId = uploadData.id;
+
+    // Étape 2: Créer un "Draft Order" en utilisant l'ID de l'image téléchargée.
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -73,7 +97,7 @@ export default async function (req, res) {
                   position: "front",
                   images: [
                     {
-                      src: imageUrl, // Use the original imageUrl here as the API expects a direct URL.
+                      id: uploadedImageId, 
                       x: 0.5,
                       y: 0.5,
                       scale: 1,
