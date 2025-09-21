@@ -33,7 +33,8 @@ export default async function (req, res) {
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     
-    const printifyProductId = process.env.env.PRINTIFY_PRODUCT_ID;
+    // Correction ici : Retrait du '.env' en trop.
+    const printifyProductId = process.env.PRINTIFY_PRODUCT_ID;
     const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
 
     if (!printifyApiKey || !printifyStoreId || !printifyProductId || !printifyVariantId) {
@@ -56,7 +57,7 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // Étape 1: Télécharger l'image sur Printify.
+    // Step 1: Télécharger l'image sur Printify.
     const uploadPayload = {
       file_name: `revelation-celeste-${order.id}.png`,
       url: imageUrl,
@@ -80,7 +81,7 @@ export default async function (req, res) {
 
     const uploadedImageId = uploadData.id;
 
-    // Étape 2: Créer un "Draft Order" en utilisant l'ID de l'image téléchargée.
+    // Step 2: Créer un "Draft Order" en utilisant l'ID de l'image téléchargée.
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -97,7 +98,7 @@ export default async function (req, res) {
                   position: "front",
                   images: [
                     {
-                      id: uploadedImageId,
+                      id: uploadedImageId, // Référencez l'image par son ID.
                       x: 0.5,
                       y: 0.5,
                       scale: 1,
