@@ -56,11 +56,12 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
+    // Étape 1: Télécharger l'image et vérifier la réponse
     const uploadPayload = {
       file_name: `revelation-celeste-${order.id}.png`,
       url: imageUrl,
     };
-
+    
     const uploadResponse = await fetch(`https://api.printify.com/v1/uploads/images.json`, {
       method: 'POST',
       headers: {
@@ -70,15 +71,16 @@ export default async function (req, res) {
       body: JSON.stringify(uploadPayload)
     });
 
-    if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        console.error('Erreur lors de l\'upload de l\'image sur Printify:', errorData);
-        return res.status(500).json({ error: 'Erreur lors de l\'upload de l\'image personnalisée.' });
+    const uploadData = await uploadResponse.json();
+    
+    if (!uploadResponse.ok || !uploadData.id) {
+        console.error('Erreur lors de l\'upload de l\'image sur Printify:', uploadData);
+        return res.status(500).json({ error: 'Erreur lors de l\'upload de l\'image personnalisée.', details: uploadData });
     }
 
-    const uploadData = await uploadResponse.json();
     const blueprintId = uploadData.id;
 
+    // Étape 2: Créer un "Draft Order" avec le "Blueprint"
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
