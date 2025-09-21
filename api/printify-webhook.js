@@ -81,8 +81,7 @@ export default async function (req, res) {
     const uploadedImageId = uploadData.id;
 
     // Step 2: Create a "Draft Order" using the uploaded image ID.
-    // The previous error was due to a confusion in the payload structure.
-    // The correct approach is to reference the uploaded image's ID.
+    // The print_provider_id has been removed to resolve the blueprint_id conflict.
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -90,7 +89,6 @@ export default async function (req, res) {
           product_id: printifyProductId,
           quantity: productItem.quantity,
           variant_id: printifyVariantId,
-          print_provider_id: 35, // This field is required to specify the print provider (Jondo).
           print_areas: [
             {
               variant_ids: [printifyVariantId],
