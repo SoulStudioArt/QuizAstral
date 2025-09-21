@@ -56,6 +56,7 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
+    // Correction de l'endpoint pour le téléchargement d'images
     const uploadPayload = {
       file_name: `revelation-celeste-${order.id}.png`,
       url: imageUrl,
@@ -79,6 +80,7 @@ export default async function (req, res) {
     const uploadData = await uploadResponse.json();
     const blueprintId = uploadData.id;
 
+    // Création d'un "Draft Order" avec le "Blueprint"
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -95,7 +97,7 @@ export default async function (req, res) {
           ]
         }
       ],
-      shipping_method: 1
+      shipping_method: 1 // 1 pour l'expédition Standard
     };
 
     const printifyResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/orders.json`, {
@@ -108,7 +110,7 @@ export default async function (req, res) {
     });
 
     if (!printifyResponse.ok) {
-      const errorData = await printifyResponse.json();
+      const errorData = await uploadResponse.json();
       console.error('Erreur de l\'API Printify:', errorData);
       return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.' });
     }
