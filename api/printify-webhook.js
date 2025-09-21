@@ -33,7 +33,7 @@ export default async function (req, res) {
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     
-    const printifyProductId = process.env.PRINTIFY_PRODUCT_ID;
+    const printifyProductId = process.env.env.PRINTIFY_PRODUCT_ID;
     const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
 
     if (!printifyApiKey || !printifyStoreId || !printifyProductId || !printifyVariantId) {
@@ -56,9 +56,31 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // Étape 1: Créer un "Draft Order" en utilisant l'URL de l'image.
-    // L'API Printify pour la création d'une commande personnalisée via 'print_areas'
-    // attend un URL dans le champ 'src' et non un ID d'image.
+    // Étape 1: Télécharger l'image sur Printify.
+    const uploadPayload = {
+      file_name: `revelation-celeste-${order.id}.png`,
+      url: imageUrl,
+    };
+    
+    const uploadResponse = await fetch(`https://api.printify.com/v1/uploads/images.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${printifyApiKey}`
+      },
+      body: JSON.stringify(uploadPayload)
+    });
+
+    const uploadData = await uploadResponse.json();
+    
+    if (!uploadResponse.ok || !uploadData.id) {
+        console.error('Erreur lors de l\'upload de l\'image sur Printify:', uploadData);
+        return res.status(500).json({ error: 'Erreur lors de l\'upload de l\'image personnalisée.', details: uploadData });
+    }
+
+    const uploadedImageId = uploadData.id;
+
+    // Étape 2: Créer un "Draft Order" en utilisant l'ID de l'image téléchargée.
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -66,6 +88,7 @@ export default async function (req, res) {
           product_id: printifyProductId,
           quantity: productItem.quantity,
           variant_id: printifyVariantId,
+          print_provider_id: 35, // L'ID pour le fournisseur Jondo
           print_areas: [
             {
               variant_ids: [printifyVariantId],
@@ -74,7 +97,7 @@ export default async function (req, res) {
                   position: "front",
                   images: [
                     {
-                      src: imageUrl, // Utilisez l'URL de l'image originale ici.
+                      id: uploadedImageId,
                       x: 0.5,
                       y: 0.5,
                       scale: 1,
