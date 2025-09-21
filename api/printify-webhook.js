@@ -3,12 +3,12 @@ import fetch from 'node-fetch';
 import getRawBody from 'raw-body';
 
 export default async function (req, res) {
-  // Check HTTP method
+  // Vérification de la méthode HTTP
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
-  // Validate Shopify webhook for security
+  // Validation du webhook Shopify pour des raisons de sécurité
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
@@ -33,12 +33,8 @@ export default async function (req, res) {
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     
-    // Ensure you have Printify product and variant IDs as environment variables.
     const printifyProductId = process.env.PRINTIFY_PRODUCT_ID;
     const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
-
-    // The ID for the print provider (Jondo). This is not needed in the payload.
-    // const printifyPrintProviderId = 35; 
 
     if (!printifyApiKey || !printifyStoreId || !printifyProductId || !printifyVariantId) {
       console.error('Variables d\'environnement Printify manquantes.');
@@ -60,33 +56,9 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // Step 1: Upload the image to Printify.
-    const uploadPayload = {
-      file_name: `revelation-celeste-${order.id}.png`,
-      url: imageUrl,
-    };
-    
-    const uploadResponse = await fetch(`https://api.printify.com/v1/uploads/images.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${printifyApiKey}`
-      },
-      body: JSON.stringify(uploadPayload)
-    });
-
-    const uploadData = await uploadResponse.json();
-    
-    if (!uploadResponse.ok || !uploadData.id) {
-        console.error('Erreur lors de l\'upload de l\'image sur Printify:', uploadData);
-        return res.status(500).json({ error: 'Erreur lors de l\'upload de l\'image personnalisée.', details: uploadData });
-    }
-
-    const uploadedImageId = uploadData.id;
-
-    // Step 2: Create a "Draft Order" using the uploaded image ID.
-    // The 'print_areas' object is the correct way to specify a custom design.
-    // We have removed `print_provider_id` to prevent the API from expecting a blueprint ID.
+    // Étape 1: Créer un "Draft Order" en utilisant l'URL de l'image.
+    // L'API Printify pour la création d'une commande personnalisée via 'print_areas'
+    // attend un URL dans le champ 'src' et non un ID d'image comme on pourrait le penser.
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -102,7 +74,7 @@ export default async function (req, res) {
                   position: "front",
                   images: [
                     {
-                      id: uploadedImageId,
+                      src: imageUrl, // Utilisez l'URL de l'image originale ici.
                       x: 0.5,
                       y: 0.5,
                       scale: 1,
@@ -129,7 +101,7 @@ export default async function (req, res) {
 
     if (!printifyResponse.ok) {
       const errorData = await printifyResponse.json();
-      console.error('Erreur de l\'API Printify:', errorData); // Corrected string literal
+      console.error('Erreur de l\'API Printify:', errorData);
       return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.', details: errorData });
     }
     
