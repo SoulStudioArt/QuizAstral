@@ -33,7 +33,6 @@ export default async function (req, res) {
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     
-    // Correction ici : Retrait du '.env' en trop.
     const printifyProductId = process.env.PRINTIFY_PRODUCT_ID;
     const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
 
@@ -89,7 +88,7 @@ export default async function (req, res) {
           product_id: printifyProductId,
           quantity: productItem.quantity,
           variant_id: printifyVariantId,
-          print_provider_id: 35, // L'ID pour le fournisseur Jondo
+          // Nous avons retiré la ligne print_provider_id: 35 pour résoudre le problème
           print_areas: [
             {
               variant_ids: [printifyVariantId],
