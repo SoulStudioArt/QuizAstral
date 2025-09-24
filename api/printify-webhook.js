@@ -38,28 +38,32 @@ export default async function (req, res) {
       return res.status(500).json({ error: 'Configuration Printify incomplète.' });
     }
 
-    // 3. EXTRACTION DES DONNÉES DU PANIER SHOPIFY
-    // Recherche de l'article avec les propriétés personnalisées
-    const productItem = order.line_items.find(item => item.properties && Object.keys(item.properties).length > 0);
-    
-    if (!productItem) {
-      console.warn('Commande sans produit personnalisé. Aucune action Printify requise.');
-      return res.status(200).json({ message: 'Commande sans produit personnalisé. Pas d\'action requise.' });
-    }
+// --- DANS printify-webhook.js ---
 
-    // Extrait les IDs et l'URL des propriétés de ligne de commande
-    const imageUrl = productItem.properties.custom_image_url;
-    const blueprintId = productItem.properties.printify_blueprint_id;
-    const providerId = productItem.properties.printify_provider_id;
-    
-    // Le Variant ID de Printify DOIT être mappé à la variante Shopify choisie.
-    // Pour simplifier, nous supposons que l'ID de variante Shopify est l'ID de variante Printify.
-    const printifyVariantId = productItem.variant_id; 
+// 3. EXTRACTION DES DONNÉES DU PANIER SHOPIFY
+// ... (code inchangé pour productItem)
 
-    if (!imageUrl || !blueprintId || !providerId || !printifyVariantId) {
-        console.error('Erreur: Données Printify (URL ou IDs) manquantes dans les propriétés de la commande.');
-        return res.status(400).json({ error: 'Données de personnalisation incomplètes dans la commande Shopify.' });
-    }
+// Extraction des propriétés spécifiques de Printify
+// Correction : Accès direct aux propriétés de l'objet.
+const properties = productItem.properties || {};
+
+const imageUrl = properties.custom_image_url;
+const blueprintId = properties.printify_blueprint_id;
+const providerId = properties.printify_provider_id;
+
+// Le variant_id est lu du line_item lui-même (pas des propriétés), ce qui est correct.
+const printifyVariantId = productItem.variant_id; 
+
+if (!imageUrl || !blueprintId || !providerId || !printifyVariantId) {
+    console.error('Erreur: Données Printify manquantes.', {
+        imageUrl: imageUrl, 
+        blueprintId: blueprintId, 
+        providerId: providerId, 
+        variantId: printifyVariantId 
+    });
+    return res.status(400).json({ error: 'Données Printify (URL ou IDs) manquantes dans les propriétés de la commande.' });
+}
+
     
     // CORRECTION CRITIQUE: Conversion des IDs en nombres entiers (Integer) pour l'API Printify
     // Ceci résout l'erreur "blueprint_id must be an integer"
