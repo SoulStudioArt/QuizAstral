@@ -37,39 +37,38 @@ export default async function (req, res) {
       console.error('Clé API ou ID de boutique Printify manquants dans les variables d\'environnement Vercel.');
       return res.status(500).json({ error: 'Configuration Printify incomplète.' });
     }
-
-    // 3. EXTRACTION DES DONNÉES DU PANIER SHOPIFY
-    // CORRECTION: La variable est déclarée correctement ici.
-    const productItem = order.line_items.find(item => item.properties && Object.keys(item.properties).length > 0);
     
-    if (!productItem) {
-      console.warn('Commande sans produit personnalisé. Aucune action Printify requise.');
-      return res.status(200).json({ message: 'Commande sans produit personnalisé. Pas d\'action requise.' });
+    // 3. EXTRACTION DES PROPRIÉTÉS DU PANIER SHOPIFY
+    // Nous accédons directement au premier article de la commande (index 0)
+    const lineItem = order.line_items[0]; 
+    
+    if (!lineItem || !lineItem.properties) {
+        console.warn('Commande sans articles ou sans propriétés personnalisées.');
+        return res.status(200).json({ message: 'Commande sans produit personnalisé. Pas d\'action requise.' });
     }
 
-    // Extraction des propriétés spécifiques de Printify du panier
-    const properties = productItem.properties || {};
+    // Extraction des propriétés directement attachées (Ceci doit maintenant fonctionner)
+    const properties = lineItem.properties;
 
     const imageUrl = properties.custom_image_url;
     const blueprintId = properties.printify_blueprint_id;
     const providerId = properties.printify_provider_id;
-    
-    // L'ID de variante Shopify (qui correspond à l'ID de variante Printify)
-    const shopifyVariantId = productItem.variant_id; 
+    const shopifyVariantId = lineItem.variant_id; // ID de la variante Shopify
 
+    // Vérification finale des données essentielles
     if (!imageUrl || !blueprintId || !providerId || !shopifyVariantId) {
         console.error('Erreur: Données Printify manquantes.', {
-            // Affiche les variables reçues (pour le débogage sur Vercel)
             imageUrl: imageUrl, 
             blueprintId: blueprintId, 
             providerId: providerId, 
             variantId: shopifyVariantId 
         });
-        return res.status(400).json({ error: 'Données Printify (URL ou IDs) manquantes dans les propriétés de la commande.' });
+        // Renvoyer 400 pour éviter que Shopify ne considère le webhook comme réussi si les données sont vides
+        return res.status(400).json({ error: 'Données Printify (URL ou IDs) manquantes ou mal formatées dans la commande.' });
     }
     
-    // CORRECTION CRITIQUE: Conversion des IDs en nombres entiers (Integer)
-    // Ceci résout l'erreur "blueprint_id must be an integer" ou les erreurs de format.
+    // CORRECTION CRITIQUE: Conversion des IDs en nombres entiers (Integer) pour l'API Printify
+    // Ceci résout l'erreur "blueprint_id must be an integer"
     const blueprintIdInt = parseInt(blueprintId, 10); 
     const providerIdInt = parseInt(providerId, 10); 
     const printifyVariantIdInt = parseInt(shopifyVariantId, 10); 
@@ -82,7 +81,7 @@ export default async function (req, res) {
           blueprint_id: blueprintIdInt,
           print_provider_id: providerIdInt,
           variant_id: printifyVariantIdInt,
-          quantity: productItem.quantity,
+          quantity: lineItem.quantity,
           
           print_areas: [
             {
@@ -140,6 +139,7 @@ export default async function (req, res) {
       });
     }
     
+    // Succès!
     res.status(200).json({ message: 'Brouillon de commande Printify créé avec succès.', orderId: order.id });
 
   } catch (error) {
