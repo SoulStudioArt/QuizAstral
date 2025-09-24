@@ -3,12 +3,12 @@ import fetch from 'node-fetch';
 import getRawBody from 'raw-body';
 
 export default async function (req, res) {
-  // Vérification de la méthode HTTP
+  // Check HTTP method
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
-  // Validation du webhook Shopify pour des raisons de sécurité
+  // Validate Shopify webhook for security
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
@@ -33,8 +33,8 @@ export default async function (req, res) {
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     
-    // Assurez-vous d'avoir les IDs pour le blueprint et le fournisseur d'impression
-    // Ces variables sont nécessaires pour la création d'un produit
+    // These are required for the "on-the-fly" product creation method.
+    // Ensure you have these configured in your Vercel environment variables.
     const printifyBlueprintId = process.env.PRINTIFY_BLUEPRINT_ID;
     const printifyPrintProviderId = process.env.PRINTIFY_PRINT_PROVIDER_ID;
     const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
@@ -59,104 +59,65 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // Étape 1: Télécharger l'image sur Printify.
-    const uploadPayload = {
-      file_name: `revelation-celeste-${order.id}.png`,
-      url: imageUrl,
-    };
-    
-    const uploadResponse = await fetch(`https://api.printify.com/v1/uploads/images.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${printifyApiKey}`
-      },
-      body: JSON.stringify(uploadPayload)
-    });
-
-    const uploadData = await uploadResponse.json();
-    
-    if (!uploadResponse.ok || !uploadData.id) {
-        console.error('Erreur lors de l\'upload de l\'image sur Printify:', uploadData);
-        return res.status(500).json({ error: 'Erreur lors de l\'upload de l\'image personnalisée.', details: uploadData });
-    }
-
-    const uploadedImageId = uploadData.id;
-
-    // Étape 2: Créer un produit personnalisé sur Printify avec l'image téléchargée.
-    const productPayload = {
-        title: `Produit personnalisé pour commande #${order.id}`,
-        blueprint_id: printifyBlueprintId,
-        print_provider_id: printifyPrintProviderId,
-        variants: [
-            {
-                id: printifyVariantId,
-                price: 1000 // Prix en cents. Ajustez selon vos besoins
-            }
-        ],
-        print_areas: [
-            {
-                variant_ids: [printifyVariantId],
-                placeholders: [
-                    {
-                        position: "front", // Ou 'left_leg', 'right_leg', etc.
-                        images: [
-                            {
-                                id: uploadedImageId,
-                                x: 0.5,
-                                y: 0.5,
-                                scale: 1,
-                                angle: 0
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    };
-    
-    const productResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/products.json`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${printifyApiKey}`
-        },
-        body: JSON.stringify(productPayload)
-    });
-    
-    const productData = await productResponse.json();
-    
-    if (!productResponse.ok || !productData.id) {
-        console.error('Erreur lors de la création du produit sur Printify:', productData);
-        return res.status(500).json({ error: 'Erreur lors de la création du produit personnalisé.', details: productData });
-    }
-    
-    const createdProductId = productData.id;
-
-    // Étape 3: Créer la commande en utilisant le produit que vous venez de créer.
-    const orderPayload = {
+    // Use the "on-the-fly" product creation method.
+    // This method requires 'blueprint_id', 'print_provider_id', 'variant_id'
+    // and the 'print_areas' object with the image URL in the 'src' field.
+    const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
         {
-          product_id: createdProductId,
-          quantity: productItem.quantity,
+          blueprint_id: printifyBlueprintId,
+          print_provider_id: printifyPrintProviderId,
           variant_id: printifyVariantId,
+          quantity: productItem.quantity,
+          print_areas: [
+            {
+              variant_ids: [printifyVariantId],
+              placeholders: [
+                {
+                  position: "front",
+                  images: [
+                    {
+                      src: imageUrl, // Use the image URL directly as the API expects it here.
+                      x: 0.5,
+                      y: 0.5,
+                      scale: 1,
+                      angle: 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ],
-      shipping_method: 1
+      shipping_method: 1,
+      send_shipping_notification: true,
+      address_to: {
+        first_name: order.shipping_address.first_name,
+        last_name: order.shipping_address.last_name,
+        email: order.contact_email,
+        phone: order.shipping_address.phone,
+        country: order.shipping_address.country_code,
+        region: order.shipping_address.province_code,
+        address1: order.shipping_address.address1,
+        address2: order.shipping_address.address2,
+        city: order.shipping_address.city,
+        zip: order.shipping_address.zip
+      }
     };
 
-    const orderResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/orders.json`, {
+    const printifyResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/orders.json`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${printifyApiKey}`
       },
-      body: JSON.stringify(orderPayload)
+      body: JSON.stringify(printifyPayload)
     });
 
-    if (!orderResponse.ok) {
-      const errorData = await orderResponse.json();
+    if (!printifyResponse.ok) {
+      const errorData = await printifyResponse.json();
       console.error('Erreur de l\'API Printify:', errorData);
       return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.', details: errorData });
     }
