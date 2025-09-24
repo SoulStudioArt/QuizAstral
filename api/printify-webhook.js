@@ -34,7 +34,6 @@ export default async function (req, res) {
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     
     // These are required for the "on-the-fly" product creation method.
-    // Ensure you have these configured in your Vercel environment variables.
     const printifyBlueprintId = process.env.PRINTIFY_BLUEPRINT_ID;
     const printifyPrintProviderId = process.env.PRINTIFY_PRINT_PROVIDER_ID;
     const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
@@ -59,9 +58,8 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // Use the "on-the-fly" product creation method.
-    // This method requires 'blueprint_id', 'print_provider_id', 'variant_id'
-    // and the 'print_areas' object with the image URL in the 'src' field.
+    // The previous error messages were misleading.
+    // The API expects a direct URL for the image, along with all the placement fields.
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
