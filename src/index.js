@@ -4,18 +4,14 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-// Ceci est le composant qui charge Tailwind CSS via un CDN.
-const TailwindScript = () => (
-    <script src="https://cdn.tailwindcss.com"></script>
-);
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    {/* On ajoute le script de Tailwind ici */}
-    <TailwindScript />
     <App />
   </React.StrictMode>
 );
 
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
