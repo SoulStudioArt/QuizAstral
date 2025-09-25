@@ -191,7 +191,6 @@ const Quiz = () => {
       };
 
       return (
-        // Le conteneur principal des questions est centré
         <div className="space-y-8 text-center py-8">
           <p className="text-lg font-semibold text-gray-500">
             Étape {currentQuestionIndex + 1} sur {maxQuestions}
@@ -238,13 +237,13 @@ const Quiz = () => {
           <h2 className="text-4xl font-bold text-center text-indigo-900">
             Votre Révélation Céleste, {answers.name || 'Cher Voyageur'}
           </h2>
-          <div className="flex flex-col lg:flex-row gap-8 bg-white p-8 rounded-2xl shadow-2xl border border-gray-100">
+          <div className="flex flex-col lg:flex-row gap-8 bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 mx-auto">
             
             {/* Colonne 1: TEXTE (FORCÉMENT CENTRÉ) */}
             <div className="lg:w-2/3 space-y-6 text-center">
               <div className="space-y-4">
                 <h3 className="text-2xl font-bold text-indigo-900 mb-4 text-center">Votre Voyage Astral</h3>
-                {/* ATTENTION: Centrer les blocs de texte longs diminue la lisibilité, mais répond à la demande */}
+                {/* Le contenu du texte est centré */}
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-center">{splitText.firstHalf}</p>
                 {!isDigitalUnlocked && splitText.secondHalf && (
                   <div className="mt-6 p-6 bg-indigo-50 border-l-4 border-indigo-500 rounded-lg shadow-md text-center mx-auto max-w-md">
@@ -263,6 +262,7 @@ const Quiz = () => {
             <div className="lg:w-1/3 space-y-6 text-center">
               <h3 className="text-2xl font-bold text-indigo-900">Votre Œuvre d'Art Unique</h3>
               
+              {/* Le bloc image doit être centré dans la colonne */}
               <div className="relative w-full aspect-[4/3] bg-gray-100 rounded-lg shadow-xl overflow-hidden border border-gray-300 mx-auto">
                 <img
                     src={result.imageUrl}
@@ -290,8 +290,9 @@ const Quiz = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 font-sans p-4">
-      <div className="w-full max-w-6xl p-8 md:p-12 bg-white rounded-3xl shadow-2xl border border-gray-200">
+    // [MODIFIÉ] Nous forçons le centrage vertical et horizontal dans le composant racine.
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 font-sans p-4 w-full">
+      <div className="w-full max-w-6xl p-8 md:p-12 bg-white rounded-3xl shadow-2xl border border-gray-200 mx-auto">
         {renderContent()}
       </div>
     </div>
@@ -299,8 +300,9 @@ const Quiz = () => {
 };
 
 export default function App() {
+  // [MODIFIÉ] Le composant exporté final doit aussi forcer le centrage de son enfant.
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 w-full">
       <Quiz />
     </div>
   );
