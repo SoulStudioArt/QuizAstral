@@ -11,9 +11,9 @@ const questions = [
   { id: 'lifeLesson', label: 'Quelle est la plus grande leçon de vie que vous ayez apprise ?', placeholder: 'Ex: La patience est une vertu', type: 'textarea' },
 ];
 
-// Définit le produit Shopify vers lequel l'utilisateur est redirigé.
-// Ce produit "mystical-eye-mandala-canvas-art-1" doit avoir TOUTES les variantes
-// (Affiche, Tasse, T-shirt, etc.) sur lesquelles le client pourra choisir.
+// [MODIFIÉ/NOUVEAU] Nous enlevons les tableaux 'products' et 'digitalDimensions' car ils ne sont plus utilisés ici.
+
+// [NOUVEAU] Définit les constantes de redirection.
 const SHOPIFY_PRODUCT_HANDLE = 'mystical-eye-mandala-canvas-art-1';
 const SHOPIFY_URL = 'https://soulstudioart.com';
 
@@ -26,7 +26,13 @@ const Quiz = () => {
   const [result, setResult] = useState({ text: '', imageUrl: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // Les états liés à la sélection de produit (selectedProduct, selectedDimension, etc.) ne sont plus nécessaires sur cette page
+  
+  // [MODIFIÉ] Suppression des états de sélection de produits/dimensions/liens :
+  // const [selectedProduct, setSelectedProduct] = useState(products[0]);
+  // const [selectedDimension, setSelectedDimension] = useState(digitalDimensions[0]);
+  // const [shopifyProductLink, setShopifyProductLink] = useState('');
+  const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false);
+  // const [copyStatus, setCopyStatus] = useState('');
   
   useEffect(() => {
     // Si l'utilisateur revient à cette page avec l'image déjà générée, on reste à l'étape 3 (résultat)
@@ -81,7 +87,6 @@ const Quiz = () => {
       const dataToSend = { answers: answers };
 
       try {
-          // Utilisation de Promise.all pour accélérer la génération
           const [textResponse, imageResponse] = await Promise.all([
             fetch('/api/generate-astral-result', {
               method: 'POST',
@@ -122,25 +127,124 @@ const Quiz = () => {
       }
   };
   
-  // NOUVELLE FONCTION: Redirige simplement vers la page produit avec l'URL de l'image
-  const handleCreateCustomProduct = () => {
-      if (!result.imageUrl) {
-        setError('Impossible d\'effectuer cette action sans l\'image.');
-        return;
-      }
-      const lienFinal = `${SHOPIFY_URL}/products/${SHOPIFY_PRODUCT_HANDLE}?image_url=${result.imageUrl}`;
-      window.top.location.href = lienFinal;
+  // [MODIFIÉ/NOUVEAU] Fonction simplifiée pour la redirection unique.
+  const handleProductAction = async () => {
+    if (!result.imageUrl) {
+      setError('Impossible d\'effectuer cette action sans l\'image.');
+      return;
+    }
+    
+    // On met ce drapeau pour débloquer le texte (même si le produit est physique)
+    setIsDigitalUnlocked(true); 
+
+    const lienFinal = `${SHOPIFY_URL}/products/${SHOPIFY_PRODUCT_HANDLE}?image_url=${result.imageUrl}`;
+    window.top.location.href = lienFinal;
   };
   
-  // NOTE: Les fonctions handleDownload, copyToClipboard, etc., sont supprimées 
-  // car la gestion des produits se fait maintenant sur Shopify.
+  // [MODIFIÉ] Suppression des fonctions non utilisées (copyToClipboard, handleDownload)
+  // const copyToClipboard = () => { /* ... */ };
+  // const handleDownload = () => { /* ... */ };
 
   const renderContent = () => {
-    // ... (Steps 0, 1, 2 inchangés) ...
-    
-    // --- ÉTAPE 3: Affichage des résultats et redirection ---
+    // ... (Step 0, 1, 2 inchangés) ...
+    if (step === 0) {
+      return (
+        <div className="text-center space-y-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-indigo-900">Bienvenue dans l'univers de Soul Studio Art</h2>
+          <p className="text-gray-700 max-w-2xl mx-auto">
+            Préparez-vous à découvrir votre "Révélation Céleste" personnalisée, accompagnée d'une œuvre d'art unique.
+            Choisissez la durée de votre voyage.
+          </p>
+          <div className="flex flex-col md:flex-row justify-center gap-6">
+            <button
+              onClick={() => { setQuizLength('short'); setStep(1); }}
+              className="bg-indigo-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105"
+            >
+              Quiz Rapide (3 Questions)
+            </button>
+            <button
+              onClick={() => { setQuizLength('long'); setStep(1); }}
+              className="bg-white text-indigo-600 border-2 border-indigo-600 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105"
+            >
+              Quiz Approfondi (7 Questions)
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (step === 1) {
+      const maxQuestions = quizLength === 'short' ? 3 : 7;
+      const currentQuestion = questions[currentQuestionIndex];
+      const isLastQuestion = currentQuestionIndex >= maxQuestions - 1;
+
+      const renderInput = (question) => {
+        if (question.type === 'textarea') {
+          return (
+            <textarea
+              name={question.id}
+              value={answers[question.id] || ''}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 h-32 resize-none"
+              placeholder={question.placeholder}
+              required={question.required}
+            />
+          );
+        }
+        return (
+          <input
+            type={question.type}
+            id={question.id}
+            name={question.id}
+            value={answers[question.id] || ''}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder={question.placeholder}
+            required={question.required}
+          />
+        );
+      };
+
+      return (
+        <div className="space-y-6 text-center">
+          <h2 className="text-3xl font-bold text-indigo-900">
+            Question {currentQuestionIndex + 1} sur {maxQuestions}
+          </h2>
+          <p className="text-gray-700 font-semibold">{currentQuestion.label}</p>
+          <div className="w-full max-w-md mx-auto">
+            {renderInput(currentQuestion)}
+          </div>
+          {error && <p className="text-red-500 font-bold">{error}</p>}
+          <div className="flex justify-between w-full max-w-md mx-auto pt-4">
+            <button
+              onClick={handlePreviousQuestion}
+              disabled={currentQuestionIndex === 0}
+              className={`bg-gray-200 text-gray-800 px-6 py-3 rounded-full font-bold transition duration-300 ${currentQuestionIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}`}
+            >
+              Précédent
+            </button>
+            <button
+              onClick={isLastQuestion ? handleSubmit : handleNextQuestion}
+              className="bg-indigo-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:bg-indigo-700 transition duration-300"
+            >
+              {isLastQuestion ? 'Découvrir ma Révélation' : 'Suivant'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (step === 2) {
+      return (
+        <div className="flex flex-col items-center justify-center p-8 space-y-4 text-center">
+          <div className="spinner"></div>
+          <h2 className="text-xl font-bold text-indigo-900">Création de votre Révélation Céleste...</h2>
+          <p className="text-gray-600">Votre rapport et votre œuvre d'art sont en cours de création. Cela peut prendre quelques instants.</p>
+        </div>
+      );
+    }
+
     if (step === 3) {
       
+      // [MODIFIÉ] Nous simplifions la visualisation à un simple aperçu
       const mockupUrl = "https://cdn.shopify.com/s/files/1/0582/3368/4040/files/mockup_printify.jpg?v=1756739373";
 
       return (
@@ -153,18 +257,23 @@ const Quiz = () => {
               <div className="p-6 bg-gray-50 rounded-xl shadow-inner">
                 <h3 className="text-2xl font-bold text-indigo-900 mb-4">Votre Voyage Astral</h3>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.firstHalf}</p>
-                {/* La suite du texte est débloquée sur la page Shopify */}
-                <div className="mt-6 p-6 bg-indigo-100 border-l-4 border-indigo-500 rounded-lg shadow-md">
+                {/* [MODIFIÉ] Affichage du message de déblocage */}
+                {!isDigitalUnlocked && splitText.secondHalf && (
+                  <div className="mt-6 p-6 bg-indigo-100 border-l-4 border-indigo-500 rounded-lg shadow-md">
                     <p className="text-indigo-800 font-semibold">
                       Débloquez la suite de votre voyage astral et choisissez votre produit en cliquant sur le bouton ci-contre.
                     </p>
-                </div>
+                  </div>
+                )}
+                {isDigitalUnlocked && (
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.secondHalf}</p>
+                )}
               </div>
             </div>
             
             <div className="lg:w-1/3 space-y-4">
               <h3 className="text-3xl font-serif font-bold text-indigo-900">Aperçu du Design</h3>
-              {/* Visualisation de l'image */}
+              {/* [MODIFIÉ] Visualisation de l'image (simple mockup) */}
               <div className="relative w-full aspect-[4/3] bg-gray-200 rounded-2xl shadow-inner overflow-hidden">
                 <img
                   src={mockupUrl}
@@ -182,9 +291,9 @@ const Quiz = () => {
                 Cette œuvre d'art abstraite et mystique sera appliquée sur le produit de votre choix.
               </p>
               
-              {/* NOUVEAU BOUTON UNIQUE DE REDIRECTION */}
+              {/* [MODIFIÉ] NOUVEAU BOUTON UNIQUE DE REDIRECTION */}
               <button
-                onClick={handleCreateCustomProduct}
+                onClick={handleProductAction}
                 disabled={!result.imageUrl}
                 className={`w-full py-4 bg-indigo-600 text-white text-xl font-bold rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 ${!result.imageUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
@@ -196,7 +305,8 @@ const Quiz = () => {
       );
     }
     
-    // ... (Step 4 est retiré)
+    // [MODIFIÉ] Suppression de l'étape 4 (Détails du produit numérique) car nous ne gérons que le flux physique.
+    // if (step === 4) { /* ... */ } 
   };
 
   return (
@@ -215,5 +325,3 @@ export default function App() {
     </div>
   );
 }
-
-// ... (le reste du fichier est inchangé)
