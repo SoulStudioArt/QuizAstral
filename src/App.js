@@ -195,7 +195,8 @@ const Quiz = () => {
           <p className="text-lg font-semibold text-gray-500">
             Étape {currentQuestionIndex + 1} sur {maxQuestions}
           </p>
-          <h2 className="text-3xl font-bold text-indigo-900 max-w-4xl mx-auto">
+          {/* COULEUR DE TEST ROUGE VIF : L'élément à identifier */}
+          <h2 className="text-4xl font-bold text-red-600 max-w-4xl mx-auto">
             {currentQuestion.label}
           </h2>
           <div className="w-full max-w-xl mx-auto pt-4">
