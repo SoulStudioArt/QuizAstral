@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 body {
   margin: 0;
@@ -7,18 +7,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Animations du spinner de chargement */
+/* Spinner professionnel et simple */
 .spinner {
-  width: 56px;
-  height: 56px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: conic-gradient(#474bff 10%, #0000);
-  mask: radial-gradient(farthest-side, #0000 calc(100% - 9px), #000 0);
-  animation: s3 1s infinite linear;
+  border: 4px solid #e5e7eb; /* Gris clair */
+  border-top: 4px solid #8b5cf6; /* Violet (Purple-500) pour le thème */
+  animation: spin 1s infinite linear;
 }
 
-@keyframes s3 {
+@keyframes spin {
   to {
-    transform: rotate(1turn);
+    transform: rotate(360deg);
   }
 }
