@@ -1,5 +1,34 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import './App.css'; 
+
+// NOTE: Tous les styles CSS sont intégrés ici pour garantir un rendu parfait.
+// Cette approche contourne les problèmes de compilation de Tailwind sur certains environnements.
+const customStyles = `
+/* Styles de base et polices */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Spinner professionnel et simple */
+.spinner {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 4px solid #e5e7eb; /* Gris clair */
+  border-top: 4px solid #8b5cf6; /* Violet (Purple-500) pour le thème */
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+`;
 
 const questions = [
   { id: 'name', label: 'Quel est votre prénom ?', placeholder: 'Ex: Clara', type: 'text', required: true },
@@ -325,6 +354,7 @@ const Quiz = () => {
 
   return (
     <div className="font-sans p-4 w-full">
+      <style>{customStyles}</style>
       <div className="w-full max-w-6xl p-8 md:p-12 bg-white rounded-3xl shadow-2xl border border-gray-200 mx-auto">
         {renderContent()}
       </div>
