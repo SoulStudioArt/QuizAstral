@@ -11,9 +11,7 @@ const questions = [
   { id: 'lifeLesson', label: 'Quelle est la plus grande leçon de vie que vous ayez apprise ?', placeholder: 'Ex: La patience est une vertu', type: 'textarea' },
 ];
 
-// [MODIFIÉ/NOUVEAU] Nous enlevons les tableaux 'products' et 'digitalDimensions' car ils ne sont plus utilisés ici.
-
-// [NOUVEAU] Définit les constantes de redirection.
+// Définit les constantes de redirection vers la page produit Shopify
 const SHOPIFY_PRODUCT_HANDLE = 'mystical-eye-mandala-canvas-art-1';
 const SHOPIFY_URL = 'https://soulstudioart.com';
 
@@ -27,12 +25,9 @@ const Quiz = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // [MODIFIÉ] Suppression des états de sélection de produits/dimensions/liens :
-  // const [selectedProduct, setSelectedProduct] = useState(products[0]);
-  // const [selectedDimension, setSelectedDimension] = useState(digitalDimensions[0]);
-  // const [shopifyProductLink, setShopifyProductLink] = useState('');
+  // États simplifiés pour le nouveau flux
   const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false);
-  // const [copyStatus, setCopyStatus] = useState('');
+  
   
   useEffect(() => {
     // Si l'utilisateur revient à cette page avec l'image déjà générée, on reste à l'étape 3 (résultat)
@@ -127,26 +122,21 @@ const Quiz = () => {
       }
   };
   
-  // [MODIFIÉ/NOUVEAU] Fonction simplifiée pour la redirection unique.
+  // Fonction simplifiée pour la redirection unique vers la page produit Shopify.
   const handleProductAction = async () => {
     if (!result.imageUrl) {
       setError('Impossible d\'effectuer cette action sans l\'image.');
       return;
     }
     
-    // On met ce drapeau pour débloquer le texte (même si le produit est physique)
+    // Déverrouille la lecture complète du texte sur cette page
     setIsDigitalUnlocked(true); 
 
     const lienFinal = `${SHOPIFY_URL}/products/${SHOPIFY_PRODUCT_HANDLE}?image_url=${result.imageUrl}`;
     window.top.location.href = lienFinal;
   };
-  
-  // [MODIFIÉ] Suppression des fonctions non utilisées (copyToClipboard, handleDownload)
-  // const copyToClipboard = () => { /* ... */ };
-  // const handleDownload = () => { /* ... */ };
 
   const renderContent = () => {
-    // ... (Step 0, 1, 2 inchangés) ...
     if (step === 0) {
       return (
         <div className="text-center space-y-8">
@@ -244,9 +234,6 @@ const Quiz = () => {
 
     if (step === 3) {
       
-      // [MODIFIÉ] Nous simplifions la visualisation à un simple aperçu
-      const mockupUrl = "https://cdn.shopify.com/s/files/1/0582/3368/4040/files/mockup_printify.jpg?v=1756739373";
-
       return (
         <div className="space-y-8">
           <h2 className="text-4xl font-bold text-center text-indigo-900">
@@ -257,7 +244,7 @@ const Quiz = () => {
               <div className="p-6 bg-gray-50 rounded-xl shadow-inner">
                 <h3 className="text-2xl font-bold text-indigo-900 mb-4">Votre Voyage Astral</h3>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.firstHalf}</p>
-                {/* [MODIFIÉ] Affichage du message de déblocage */}
+                {/* Message de déblocage du texte */}
                 {!isDigitalUnlocked && splitText.secondHalf && (
                   <div className="mt-6 p-6 bg-indigo-100 border-l-4 border-indigo-500 rounded-lg shadow-md">
                     <p className="text-indigo-800 font-semibold">
@@ -272,26 +259,22 @@ const Quiz = () => {
             </div>
             
             <div className="lg:w-1/3 space-y-4">
-              <h3 className="text-3xl font-serif font-bold text-indigo-900">Aperçu du Design</h3>
-              {/* [MODIFIÉ] Visualisation de l'image (simple mockup) */}
+              <h3 className="text-3xl font-serif font-bold text-indigo-900">Votre Œuvre d'Art Unique</h3>
+              
+              {/* BLOC D'IMAGE TRÈS SIMPLE : Affiche seulement l'œuvre d'art générée */}
               <div className="relative w-full aspect-[4/3] bg-gray-200 rounded-2xl shadow-inner overflow-hidden">
                 <img
-                  src={mockupUrl}
-                  alt="Affiche sur un mur (Aperçu)"
-                  className="w-full h-full object-cover"
-                />
-                <img
-                  src={result.imageUrl}
-                  alt="Design d'affiche"
-                  className="absolute inset-[15%] w-[70%] h-[70%] object-contain"
+                    src={result.imageUrl}
+                    alt="Design personnalisé"
+                    className="w-full h-full object-contain"
                 />
               </div>
+              {/* FIN DU BLOC D'IMAGE */}
 
               <p className="text-gray-600 italic text-center text-sm">
-                Cette œuvre d'art abstraite et mystique sera appliquée sur le produit de votre choix.
+                Cette œuvre d'art abstraite et mystique capture l'essence de votre profil astral.
               </p>
               
-              {/* [MODIFIÉ] NOUVEAU BOUTON UNIQUE DE REDIRECTION */}
               <button
                 onClick={handleProductAction}
                 disabled={!result.imageUrl}
@@ -304,9 +287,6 @@ const Quiz = () => {
         </div>
       );
     }
-    
-    // [MODIFIÉ] Suppression de l'étape 4 (Détails du produit numérique) car nous ne gérons que le flux physique.
-    // if (step === 4) { /* ... */ } 
   };
 
   return (
