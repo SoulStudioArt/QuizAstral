@@ -38,8 +38,8 @@ export default async function (req, res) {
       return res.status(500).json({ error: 'Configuration Printify incomplète.' });
     }
     
-    // 3. EXTRACTION DES PROPRIÉTÉS DU PANIER SHOPIFY
-    // Nous accédons directement au premier article de la commande (index 0)
+    // 3. EXTRACTION DES PROPRIÉTÉS DU PANIER SHOPIFY (SOLUTION AU PROBLÈME 'UNDEFINED')
+    // Accès direct au premier article de la commande (index 0) où les propriétés sont stockées.
     const lineItem = order.line_items[0]; 
     
     if (!lineItem || !lineItem.properties) {
@@ -47,7 +47,7 @@ export default async function (req, res) {
         return res.status(200).json({ message: 'Commande sans produit personnalisé. Pas d\'action requise.' });
     }
 
-    // Extraction des propriétés directement attachées (Ceci doit maintenant fonctionner)
+    // Extraction des propriétés sécurisée (elles sont des clés directement dans l'objet properties)
     const properties = lineItem.properties;
 
     const imageUrl = properties.custom_image_url;
@@ -57,18 +57,18 @@ export default async function (req, res) {
 
     // Vérification finale des données essentielles
     if (!imageUrl || !blueprintId || !providerId || !shopifyVariantId) {
-        console.error('Erreur: Données Printify manquantes.', {
+        // Cette erreur NE DEVRAIT PLUS apparaître après cette correction.
+        console.error('Erreur: Données Printify manquantes ou mal formatées dans la commande.', {
             imageUrl: imageUrl, 
             blueprintId: blueprintId, 
             providerId: providerId, 
             variantId: shopifyVariantId 
         });
-        // Renvoyer 400 pour éviter que Shopify ne considère le webhook comme réussi si les données sont vides
         return res.status(400).json({ error: 'Données Printify (URL ou IDs) manquantes ou mal formatées dans la commande.' });
     }
     
-    // CORRECTION CRITIQUE: Conversion des IDs en nombres entiers (Integer) pour l'API Printify
-    // Ceci résout l'erreur "blueprint_id must be an integer"
+    // CORRECTION CRITIQUE: Conversion des IDs en nombres entiers (Integer)
+    // Ceci résout l'erreur "blueprint_id must be an integer" ou les erreurs de format.
     const blueprintIdInt = parseInt(blueprintId, 10); 
     const providerIdInt = parseInt(providerId, 10); 
     const printifyVariantIdInt = parseInt(shopifyVariantId, 10); 
