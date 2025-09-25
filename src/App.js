@@ -11,40 +11,12 @@ const questions = [
   { id: 'lifeLesson', label: 'Quelle est la plus grande leçon de vie que vous ayez apprise ?', placeholder: 'Ex: La patience est une vertu', type: 'textarea' },
 ];
 
-// Le tableau `products` contient les IDs Printify STATIQUES
-// Vous devez remplacer les IDs PLACEHOLDER ci-dessous par les VRAIS IDs NUMÉRIQUES
 const products = [
-  { 
-    name: 'Fichier Numérique HD', 
-    price: '1,99', 
-    mockupUrl: 'https://placehold.co/600x600/E5E7EB/gray?text=Fichier+Numérique',
-    shopifyHandle: 'fichier-numerique-hd', // Handle Shopify pour le produit numérique
-    // PAS d'IDs Printify pour le fichier numérique
-  },
-  { 
-    name: 'Toile - Mystical Eye Mandala', 
-    price: '48,34', // Le prix de base (sans la variante de taille)
-    mockupUrl: 'https://cdn.shopify.com/s/files/1/0582/3368/4040/files/mockup_printify.jpg?v=1756739373',
-    shopifyHandle: 'mystical-eye-mandala-canvas-art-1', // Le Handle Shopify de votre produit Toile
-    
-    // ATTENTION: Ces IDs doivent être des NOMBRES (Integers)
-    PRINTIFY_BLUEPRINT_ID: 1061,      // PLACEHOLDER: ID NUMÉRIQUE du modèle de toile (ex: 1061)
-    PRINTIFY_PRINT_PROVIDER_ID: 35, // PLACEHOLDER: ID NUMÉRIQUE du fournisseur (ex: 35 pour Jondo)
-    // Le Variant ID N'EST PAS envoyé ici car il est choisi sur la page Shopify
-  },
-  // Ajoutez d'autres produits ici si nécessaire, par exemple une tasse
-  /*
-  { 
-    name: 'Tasse Révélation Céleste', 
-    price: '22,00', 
-    mockupUrl: 'https://placehold.co/600x600/F5F5F5/gray?text=Tasse+Mockup',
-    shopifyHandle: 'tasse-revelation-celeste', 
-    PRINTIFY_BLUEPRINT_ID: 68,
-    PRINTIFY_PRINT_PROVIDER_ID: 1,
-  },
-  */
+  { name: 'Fichier Numérique HD', price: '1,99', mockupUrl: 'https://placehold.co/600x600/E5E7EB/gray?text=Fichier+Numérique' },
+  { name: 'Affiche', price: '35,00', mockupUrl: 'https://cdn.shopify.com/s/files/1/0582/3368/4040/files/mockup_printify.jpg?v=1756739373' },
+  { name: 'Tasse', price: '22,00', mockupUrl: 'https://placehold.co/600x600/F5F5F5/gray?text=Tasse+Mockup' },
+  { name: 'T-shirt', price: '28,00', mockupUrl: 'https://placehold.co/600x600/F5F5F5/gray?text=T-shirt+Mockup' },
 ];
-
 
 const digitalDimensions = [
   { name: 'Fond d\'écran mobile', size: '1080x1920' },
@@ -158,10 +130,9 @@ const Quiz = () => {
       }
   };
   
-  // --- REMPLACER CETTE FONCTION DANS VOTRE FICHIER APP.JS ---
-const handleProductAction = async () => {
-    if (!result.imageUrl || !selectedProduct.shopifyHandle) {
-      setError('Impossible d\'effectuer cette action : informations produit manquantes.');
+  const handleProductAction = async () => {
+    if (!result.imageUrl) {
+      setError('Impossible d\'effectuer cette action sans l\'image.');
       return;
     }
 
@@ -170,23 +141,13 @@ const handleProductAction = async () => {
     if (selectedProduct.name === 'Fichier Numérique HD') {
       setStep(4);
     } else {
-      const handleDuProduit = selectedProduct.shopifyHandle;
-      const boutiqueUrl = 'https://soulstudioart.com'; // Assurez-vous que cette URL est correcte
-
-      // --- Récupère les IDs de l'objet selectedProduct (qui sont statiques) ---
-      // Si ces IDs sont UNDEFINED, c'est que vous avez oublié de les mettre dans le tableau 'products'
-      const PRINTIFY_BLUEPRINT_ID = selectedProduct.PRINTIFY_BLUEPRINT_ID; 
-      const PRINTIFY_PRINT_PROVIDER_ID = selectedProduct.PRINTIFY_PRINT_PROVIDER_ID; 
-      // -----------------------------------------------------------------------
-
-      // Construction du lien avec TOUS les paramètres
-      const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${result.imageUrl}&blueprint_id=${PRINTIFY_BLUEPRINT_ID}&provider_id=${PRINTIFY_PRINT_PROVIDER_ID}`;
+      const handleDuProduit = 'mystical-eye-mandala-canvas-art-1';
+      const boutiqueUrl = 'https://soulstudioart.com';
+      const lienFinal = `${boutiqueUrl}/products/${handleDuProduit}?image_url=${result.imageUrl}`;
       
-      // Redirection
       window.top.location.href = lienFinal;
     }
-};
-// --- FIN DE LA FONCTION À REMPLACER ---
+  };
 
   const copyToClipboard = () => {
     const el = document.createElement('textarea');
