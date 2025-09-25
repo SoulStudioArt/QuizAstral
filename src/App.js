@@ -239,19 +239,19 @@ const Quiz = () => {
           </h2>
           <div className="flex flex-col lg:flex-row gap-8 bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 mx-auto">
             
-            <div className="lg:w-2/3 space-y-6 text-center">
+            <div className="lg:w-2/3 space-y-6">
               <div className="space-y-4">
-                <h3 className="text-2xl font-bold text-indigo-900 mb-4 text-center">Votre Voyage Astral</h3>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-center">{splitText.firstHalf}</p>
+                <h3 className="text-2xl font-bold text-indigo-900 mb-4">Votre Voyage Astral</h3>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.firstHalf}</p>
                 {!isDigitalUnlocked && splitText.secondHalf && (
-                  <div className="mt-6 p-6 bg-indigo-50 border-l-4 border-indigo-500 rounded-lg shadow-md text-center mx-auto max-w-md">
+                  <div className="mt-6 p-6 bg-indigo-50 border-l-4 border-indigo-500 rounded-lg shadow-md">
                     <p className="text-indigo-800 font-semibold">
                       Débloquez la suite de votre voyage astral et choisissez votre produit en cliquant sur le bouton ci-contre.
                     </p>
                   </div>
                 )}
                 {isDigitalUnlocked && (
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-center">{splitText.secondHalf}</p>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.secondHalf}</p>
                 )}
               </div>
             </div>
@@ -286,7 +286,7 @@ const Quiz = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 font-sans p-4 w-full">
+    <div className="font-sans p-4 w-full">
       <div className="w-full max-w-6xl p-8 md:p-12 bg-white rounded-3xl shadow-2xl border border-gray-200 mx-auto">
         {renderContent()}
       </div>
@@ -296,7 +296,7 @@ const Quiz = () => {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 w-full">
+    <div className="bg-gray-50 p-4 w-full">
       <Quiz />
     </div>
   );
