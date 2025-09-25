@@ -1,58 +1,129 @@
+import crypto from 'crypto';
 import fetch from 'node-fetch';
-import { put } from '@vercel/blob';
+import getRawBody from 'raw-body';
 
 export default async function (req, res) {
+  // Check HTTP method
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
+  // Validate Shopify webhook for security
+  const hmacHeader = req.headers['x-shopify-hmac-sha256'];
+  const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
+
+  if (!hmacHeader || !shopifyWebhookSecret) {
+    console.error('Webhook secret ou header HMAC manquant.');
+    return res.status(401).json({ message: 'Erreur d\'authentification: Clé secrète ou header manquant.' });
+  }
+
+  const rawBody = await getRawBody(req);
+  
+  const hmac = crypto.createHmac('sha256', shopifyWebhookSecret)
+    .update(rawBody)
+    .digest('base64');
+
+  if (hmac !== hmacHeader) {
+    console.error('Hachage du webhook non valide.');
+    return res.status(401).json({ message: 'Hachage du webhook non valide.' });
+  }
+  
   try {
-    const { answers } = req.body;
+    const order = JSON.parse(rawBody.toString('utf8'));
+    const printifyApiKey = process.env.PRINTIFY_API_KEY;
+    const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     
-    if (!answers) {
-      return res.status(400).json({ error: 'Données de quiz manquantes.' });
+    // These are required for the "on-the-fly" product creation method.
+    const printifyBlueprintId = process.env.PRINTIFY_BLUEPRINT_ID;
+    const printifyPrintProviderId = process.env.PRINTIFY_PRINT_PROVIDER_ID;
+    const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
+
+    if (!printifyApiKey || !printifyStoreId || !printifyBlueprintId || !printifyPrintProviderId || !printifyVariantId) {
+      console.error('Variables d\'environnement Printify manquantes.');
+      return res.status(500).json({ error: 'Configuration Printify incomplète.' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    let imageUrl = null;
+    const productItem = order.line_items.find(item => item.properties.length > 0);
 
-    const imagePrompt = `
-      Générez une œuvre d'art numérique abstraite et mystique de haute qualité, inspirée par une "Révélation Céleste".
-      L'image doit incorporer des éléments visuels liés au cosmos, à l'astrologie, et à l'énergie spirituelle.
-      Les couleurs doivent être vibrantes et profondes. Le style doit être élégant et moderne, comme de l'art de studio pour l'âme.
-      L'image doit représenter visuellement la révélation personnalisée de ${answers.name}, en tenant compte de ses aspirations et de sa personnalité.
-    `;
+    if (productItem) {
+      const customImageProperty = productItem.properties.find(prop => prop.name === 'custom_image_url');
+      if (customImageProperty) {
+        imageUrl = customImageProperty.value;
+      }
+    }
 
-    const payloadImage = { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1 } };
-    const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
-    const responseImage = await fetch(apiUrlImage, {
+    if (!imageUrl) {
+      console.warn('Aucune URL d\'image personnalisée trouvée pour la commande:', order.order_number);
+      return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
+    }
+    
+    // The previous error messages were misleading.
+    // The API expects a direct URL for the image, along with all the placement fields.
+    const printifyPayload = {
+      external_id: `shopify-order-${order.id}`,
+      line_items: [
+        {
+          blueprint_id: printifyBlueprintId,
+          print_provider_id: printifyPrintProviderId,
+          variant_id: printifyVariantId,
+          quantity: productItem.quantity,
+          print_areas: [
+            {
+              variant_ids: [printifyVariantId],
+              placeholders: [
+                {
+                  position: "front",
+                  images: [
+                    {
+                      src: imageUrl, // Use the image URL directly as the API expects it here.
+                      x: 0.5,
+                      y: 0.5,
+                      scale: 1,
+                      angle: 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      shipping_method: 1,
+      send_shipping_notification: true,
+      address_to: {
+        first_name: order.shipping_address.first_name,
+        last_name: order.shipping_address.last_name,
+        email: order.contact_email,
+        phone: order.shipping_address.phone,
+        country: order.shipping_address.country_code,
+        region: order.shipping_address.province_code,
+        address1: order.shipping_address.address1,
+        address2: order.shipping_address.address2,
+        city: order.shipping_address.city,
+        zip: order.shipping_address.zip
+      }
+    };
+
+    const printifyResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/orders.json`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payloadImage)
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${printifyApiKey}`
+      },
+      body: JSON.stringify(printifyPayload)
     });
 
-    if (!responseImage.ok) {
-        return res.status(responseImage.status).json({ error: `Erreur de l'API Imagen: ${responseImage.statusText}` });
+    if (!printifyResponse.ok) {
+      const errorData = await printifyResponse.json();
+      console.error('Erreur de l\'API Printify:', errorData);
+      return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.', details: errorData });
     }
-
-    const resultImage = await responseImage.json();
-    const base64Data = resultImage?.predictions?.[0]?.bytesBase64Encoded;
-
-    if (!base64Data) {
-      return res.status(500).json({ error: 'L\'API n\'a pas retourné de données d\'image valides.' });
-    }
-
-    const imageBuffer = Buffer.from(base64Data, 'base64');
-    const filename = `revelation-celeste-${Date.now()}.png`;
-
-    const { url: imageUrl } = await put(filename, imageBuffer, {
-      access: 'public',
-      token: process.env.BLOB_READ_WRITE_TOKEN
-    });
-
-    res.status(200).json({ imageUrl });
+    
+    res.status(200).json({ message: 'Brouillon de commande Printify créé avec succès.', orderId: order.id });
 
   } catch (error) {
-    console.error('Erreur de la Vercel Function (image) :', error);
-    res.status(500).json({ error: 'Une erreur est survenue sur le serveur lors de la génération de l\'image.' });
+    console.error('Erreur lors du traitement du webhook Shopify:', error);
+    res.status(500).json({ error: 'Une erreur interne est survenue.' });
   }
 }
