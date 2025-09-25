@@ -4,7 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-// Nous allons injecter le script de Tailwind directement ici pour garantir son chargement.
+// Ceci est le composant qui charge Tailwind CSS via un CDN.
 const TailwindScript = () => (
     <script src="https://cdn.tailwindcss.com"></script>
 );
@@ -12,6 +12,7 @@ const TailwindScript = () => (
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
+    {/* On ajoute le script de Tailwind ici */}
     <TailwindScript />
     <App />
   </React.StrictMode>
