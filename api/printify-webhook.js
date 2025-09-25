@@ -3,12 +3,12 @@ import fetch from 'node-fetch';
 import getRawBody from 'raw-body';
 
 export default async function (req, res) {
-  // 1. VÉRIFICATION DE LA MÉTHODE HTTP
+  // Check HTTP method
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
-  // 2. VÉRIFICATION DE LA SIGNATURE SHOPIFY (SÉCURITÉ)
+  // Validate Shopify webhook for security
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
@@ -24,7 +24,7 @@ export default async function (req, res) {
     .digest('base64');
 
   if (hmac !== hmacHeader) {
-    console.error('Hachage du webhook non valide. Requête rejetée.');
+    console.error('Hachage du webhook non valide.');
     return res.status(401).json({ message: 'Hachage du webhook non valide.' });
   }
   
@@ -33,65 +33,50 @@ export default async function (req, res) {
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
     
-    if (!printifyApiKey || !printifyStoreId) {
-      console.error('Clé API ou ID de boutique Printify manquants dans les variables d\'environnement Vercel.');
+    // These are required for the "on-the-fly" product creation method.
+    const printifyBlueprintId = process.env.PRINTIFY_BLUEPRINT_ID;
+    const printifyPrintProviderId = process.env.PRINTIFY_PRINT_PROVIDER_ID;
+    const printifyVariantId = process.env.PRINTIFY_VARIANT_ID;
+
+    if (!printifyApiKey || !printifyStoreId || !printifyBlueprintId || !printifyPrintProviderId || !printifyVariantId) {
+      console.error('Variables d\'environnement Printify manquantes.');
       return res.status(500).json({ error: 'Configuration Printify incomplète.' });
     }
-    
-    // 3. EXTRACTION DES PROPRIÉTÉS DU PANIER SHOPIFY (SOLUTION AU PROBLÈME 'UNDEFINED')
-    // Accès direct au premier article de la commande (index 0) où les propriétés sont stockées.
-    const lineItem = order.line_items[0]; 
-    
-    if (!lineItem || !lineItem.properties) {
-        console.warn('Commande sans articles ou sans propriétés personnalisées.');
-        return res.status(200).json({ message: 'Commande sans produit personnalisé. Pas d\'action requise.' });
+
+    let imageUrl = null;
+    const productItem = order.line_items.find(item => item.properties.length > 0);
+
+    if (productItem) {
+      const customImageProperty = productItem.properties.find(prop => prop.name === 'custom_image_url');
+      if (customImageProperty) {
+        imageUrl = customImageProperty.value;
+      }
     }
 
-    // Extraction des propriétés sécurisée (elles sont des clés directement dans l'objet properties)
-    const properties = lineItem.properties;
-
-    const imageUrl = properties.custom_image_url;
-    const blueprintId = properties.printify_blueprint_id;
-    const providerId = properties.printify_provider_id;
-    const shopifyVariantId = lineItem.variant_id; // ID de la variante Shopify
-
-    // Vérification finale des données essentielles
-    if (!imageUrl || !blueprintId || !providerId || !shopifyVariantId) {
-        // Cette erreur NE DEVRAIT PLUS apparaître après cette correction.
-        console.error('Erreur: Données Printify manquantes ou mal formatées dans la commande.', {
-            imageUrl: imageUrl, 
-            blueprintId: blueprintId, 
-            providerId: providerId, 
-            variantId: shopifyVariantId 
-        });
-        return res.status(400).json({ error: 'Données Printify (URL ou IDs) manquantes ou mal formatées dans la commande.' });
+    if (!imageUrl) {
+      console.warn('Aucune URL d\'image personnalisée trouvée pour la commande:', order.order_number);
+      return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
     
-    // CORRECTION CRITIQUE: Conversion des IDs en nombres entiers (Integer)
-    // Ceci résout l'erreur "blueprint_id must be an integer" ou les erreurs de format.
-    const blueprintIdInt = parseInt(blueprintId, 10); 
-    const providerIdInt = parseInt(providerId, 10); 
-    const printifyVariantIdInt = parseInt(shopifyVariantId, 10); 
-
-    // 4. CRÉATION DU BROUILLON DE COMMANDE PRINTIFY (MÉTHODE ON-THE-FLY)
+    // The previous error messages were misleading.
+    // The API expects a direct URL for the image, along with all the placement fields.
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
         {
-          blueprint_id: blueprintIdInt,
-          print_provider_id: providerIdInt,
-          variant_id: printifyVariantIdInt,
-          quantity: lineItem.quantity,
-          
+          blueprint_id: printifyBlueprintId,
+          print_provider_id: printifyPrintProviderId,
+          variant_id: printifyVariantId,
+          quantity: productItem.quantity,
           print_areas: [
             {
-              variant_ids: [printifyVariantIdInt], 
+              variant_ids: [printifyVariantId],
               placeholders: [
                 {
-                  position: "front", // Assurez-vous que cette position est correcte pour votre gabarit
+                  position: "front",
                   images: [
                     {
-                      src: imageUrl, // L'URL de Vercel Blob est utilisée ici
+                      src: imageUrl, // Use the image URL directly as the API expects it here.
                       x: 0.5,
                       y: 0.5,
                       scale: 1,
@@ -104,17 +89,17 @@ export default async function (req, res) {
           ]
         }
       ],
-      shipping_method: 1, // 1 = Standard shipping
+      shipping_method: 1,
       send_shipping_notification: true,
       address_to: {
         first_name: order.shipping_address.first_name,
         last_name: order.shipping_address.last_name,
         email: order.contact_email,
-        phone: order.shipping_address.phone || 'N/A',
+        phone: order.shipping_address.phone,
         country: order.shipping_address.country_code,
         region: order.shipping_address.province_code,
         address1: order.shipping_address.address1,
-        address2: order.shipping_address.address2 || '',
+        address2: order.shipping_address.address2,
         city: order.shipping_address.city,
         zip: order.shipping_address.zip
       }
@@ -129,17 +114,12 @@ export default async function (req, res) {
       body: JSON.stringify(printifyPayload)
     });
 
-    // 5. GESTION DES ERREURS ET SUCCÈS
     if (!printifyResponse.ok) {
       const errorData = await printifyResponse.json();
-      console.error('Erreur CRITIQUE lors de la création de la commande Printify:', errorData);
-      return res.status(500).json({ 
-        error: 'Échec de la création de la commande Printify.', 
-        details: errorData 
-      });
+      console.error('Erreur de l\'API Printify:', errorData);
+      return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.', details: errorData });
     }
     
-    // Succès!
     res.status(200).json({ message: 'Brouillon de commande Printify créé avec succès.', orderId: order.id });
 
   } catch (error) {
