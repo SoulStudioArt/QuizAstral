@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import './App.css'; // Assurez-vous que votre fichier CSS est toujours là, même si la plupart des styles sont inline via Tailwind
+import './App.css'; 
 
-// Définitions du quiz (inchangées)
 const questions = [
   { id: 'name', label: 'Quel est votre prénom ?', placeholder: 'Ex: Clara', type: 'text', required: true },
   { id: 'birthDate', label: 'Quelle est votre date de naissance ?', type: 'date', required: true },
@@ -12,7 +11,6 @@ const questions = [
   { id: 'lifeLesson', label: 'Quelle est la plus grande leçon de vie que vous ayez apprise ?', placeholder: 'Ex: La patience est une vertu', type: 'textarea' },
 ];
 
-// Constantes de redirection (inchangées)
 const SHOPIFY_PRODUCT_HANDLE = 'mystical-eye-mandala-canvas-art-1';
 const SHOPIFY_URL = 'https://soulstudioart.com';
 
@@ -135,24 +133,25 @@ const Quiz = () => {
   const renderContent = () => {
     if (step === 0) {
       return (
-        <div className="text-center space-y-8">
-          <h2 className="text-3xl md:text-4xl font-serif font-bold text-yellow-400">
+        // [MODIFIÉ] Ajout de classes pour le centrage horizontal et vertical (si l'iframe le permet)
+        <div className="text-center space-y-10 py-12">
+          <h2 className="text-4xl md:text-5xl font-bold text-indigo-900">
             Bienvenue dans l'univers de Soul Studio Art
           </h2>
-          <p className="text-gray-300 max-w-2xl mx-auto">
-            Préparez-vous à découvrir votre **"Révélation Céleste"** personnalisée, accompagnée d'une œuvre d'art unique.
+          <p className="text-gray-700 text-lg max-w-3xl mx-auto">
+            Préparez-vous à découvrir votre "Révélation Céleste" personnalisée, accompagnée d'une œuvre d'art unique.
             Choisissez la durée de votre voyage.
           </p>
-          <div className="flex flex-col md:flex-row justify-center gap-6">
+          <div className="flex flex-col md:flex-row justify-center gap-6 pt-6">
             <button
               onClick={() => { setQuizLength('short'); setStep(1); }}
-              className="bg-purple-700 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-purple-600 transition-all duration-300 transform hover:scale-105 shadow-purple-500/50"
+              className="bg-indigo-600 text-white px-10 py-4 rounded-lg font-bold text-lg shadow-xl hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105"
             >
               Quiz Rapide (3 Questions)
             </button>
             <button
               onClick={() => { setQuizLength('long'); setStep(1); }}
-              className="bg-transparent text-yellow-400 border-2 border-yellow-400 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-yellow-400/10 transition-all duration-300 transform hover:scale-105"
+              className="bg-white text-indigo-600 border-2 border-indigo-600 px-10 py-4 rounded-lg font-bold text-lg shadow-xl hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105"
             >
               Quiz Approfondi (7 Questions)
             </button>
@@ -172,7 +171,8 @@ const Quiz = () => {
               name={question.id}
               value={answers[question.id] || ''}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-purple-500 bg-black/20 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 h-32 resize-none"
+              // [MODIFIÉ] Largeur max pour centrer l'input, padding vertical uniforme
+              className="w-full max-w-lg mx-auto px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 h-32 resize-none text-gray-900"
               placeholder={question.placeholder}
               required={question.required}
             />
@@ -185,7 +185,8 @@ const Quiz = () => {
             name={question.id}
             value={answers[question.id] || ''}
             onChange={handleChange}
-            className="w-full px-4 py-3 border border-purple-500 bg-black/20 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            // [MODIFIÉ] Largeur max pour centrer l'input, padding vertical uniforme
+            className="w-full max-w-lg mx-auto px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 text-gray-900"
             placeholder={question.placeholder}
             required={question.required}
           />
@@ -193,26 +194,31 @@ const Quiz = () => {
       };
 
       return (
-        <div className="space-y-6 text-center">
-          <h2 className="text-3xl font-serif font-bold text-yellow-400">
-            Question {currentQuestionIndex + 1} sur {maxQuestions}
+        <div className="space-y-8 text-center py-8">
+          {/* [MODIFIÉ] Amélioration de la hiérarchie du titre */}
+          <p className="text-lg font-semibold text-gray-500">
+            Étape {currentQuestionIndex + 1} sur {maxQuestions}
+          </p>
+          <h2 className="text-3xl font-bold text-indigo-900 max-w-4xl mx-auto">
+            {currentQuestion.label}
           </h2>
-          <p className="text-gray-300 font-semibold">{currentQuestion.label}</p>
-          <div className="w-full max-w-md mx-auto">
+          <div className="w-full max-w-xl mx-auto pt-4">
             {renderInput(currentQuestion)}
           </div>
-          {error && <p className="text-red-400 font-bold">{error}</p>}
-          <div className="flex justify-between w-full max-w-md mx-auto pt-4">
+          {error && <p className="text-red-500 font-bold">{error}</p>}
+          <div className="flex justify-center gap-4 w-full max-w-xl mx-auto pt-6">
             <button
               onClick={handlePreviousQuestion}
               disabled={currentQuestionIndex === 0}
-              className={`bg-purple-800/50 text-gray-300 px-6 py-3 rounded-full font-bold transition duration-300 shadow-lg ${currentQuestionIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-700'}`}
+              // [MODIFIÉ] Bouton uniformisé
+              className={`bg-gray-200 text-gray-800 px-8 py-4 rounded-lg font-bold transition duration-300 shadow-lg ${currentQuestionIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}`}
             >
               Précédent
             </button>
             <button
               onClick={isLastQuestion ? handleSubmit : handleNextQuestion}
-              className="bg-yellow-600 text-gray-900 px-6 py-3 rounded-full font-bold shadow-lg hover:bg-yellow-500 transition duration-300 transform hover:scale-105 shadow-yellow-500/50"
+              // [MODIFIÉ] Bouton uniformisé
+              className="bg-indigo-600 text-white px-8 py-4 rounded-lg font-bold shadow-xl hover:bg-indigo-700 transition duration-300"
             >
               {isLastQuestion ? 'Découvrir ma Révélation' : 'Suivant'}
             </button>
@@ -222,10 +228,10 @@ const Quiz = () => {
     }
     if (step === 2) {
       return (
-        <div className="flex flex-col items-center justify-center p-8 space-y-4 text-center">
-          <div className="spinner"></div> {/* Assurez-vous que votre style de spinner est bien visible sur fond sombre */}
-          <h2 className="text-xl font-bold text-yellow-400">Création de votre Révélation Céleste...</h2>
-          <p className="text-gray-300">Votre rapport et votre œuvre d'art sont en cours de création. Cela peut prendre quelques instants.</p>
+        <div className="flex flex-col items-center justify-center p-12 space-y-6 text-center">
+          <div className="spinner"></div> 
+          <h2 className="text-2xl font-bold text-indigo-900">Création de votre Révélation Céleste...</h2>
+          <p className="text-gray-600 text-lg">Votre rapport et votre œuvre d'art sont en cours de création. Cela peut prendre quelques instants.</p>
         </div>
       );
     }
@@ -233,32 +239,38 @@ const Quiz = () => {
     if (step === 3) {
       
       return (
-        <div className="space-y-8">
-          <h2 className="text-4xl font-serif font-bold text-center text-yellow-400">
+        // [MODIFIÉ] Ajout d'une ombre et d'un padding augmenté pour la carte des résultats
+        <div className="space-y-10 py-10">
+          <h2 className="text-4xl font-bold text-center text-indigo-900">
             Votre Révélation Céleste, {answers.name || 'Cher Voyageur'}
           </h2>
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-8 bg-white p-8 rounded-2xl shadow-2xl border border-gray-100">
+            
+            {/* Colonne 1: TEXTE */}
             <div className="lg:w-2/3 space-y-6">
-              <div className="p-8 bg-black/30 rounded-xl shadow-2xl backdrop-blur-md border border-purple-700/50">
-                <h3 className="text-3xl font-serif font-bold text-yellow-400 mb-4">Votre Voyage Astral</h3>
-                <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{splitText.firstHalf}</p>
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-indigo-900 mb-4">Votre Voyage Astral</h3>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.firstHalf}</p>
                 {!isDigitalUnlocked && splitText.secondHalf && (
-                  <div className="mt-6 p-6 bg-purple-900/40 border-l-4 border-yellow-500 rounded-lg shadow-xl">
-                    <p className="text-gray-200 font-semibold italic">
+                  // [MODIFIÉ] Bloc de déblocage plus visible
+                  <div className="mt-6 p-6 bg-indigo-50 border-l-4 border-indigo-500 rounded-lg shadow-md">
+                    <p className="text-indigo-800 font-semibold">
                       Débloquez la suite de votre voyage astral et choisissez votre produit en cliquant sur le bouton ci-contre.
                     </p>
                   </div>
                 )}
                 {isDigitalUnlocked && (
-                  <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{splitText.secondHalf}</p>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.secondHalf}</p>
                 )}
               </div>
             </div>
             
-            <div className="lg:w-1/3 space-y-4">
-              <h3 className="text-3xl font-serif font-bold text-yellow-400">Votre Œuvre d'Art Unique</h3>
+            {/* Colonne 2: IMAGE & BOUTON */}
+            <div className="lg:w-1/3 space-y-6">
+              <h3 className="text-2xl font-bold text-indigo-900">Votre Œuvre d'Art Unique</h3>
               
-              <div className="relative w-full aspect-[4/3] bg-purple-900/50 rounded-2xl shadow-2xl overflow-hidden border-2 border-yellow-400/50">
+              {/* BLOC D'IMAGE SIMPLE */}
+              <div className="relative w-full aspect-[4/3] bg-gray-100 rounded-lg shadow-xl overflow-hidden border border-gray-300">
                 <img
                     src={result.imageUrl}
                     alt="Design personnalisé"
@@ -266,14 +278,15 @@ const Quiz = () => {
                 />
               </div>
 
-              <p className="text-gray-400 italic text-center text-sm">
-                Cette œuvre d'art abstraite et mystique capture l'essence de votre profil astral.
+              <p className="text-gray-600 italic text-center text-sm">
+                Cette œuvre d'art capture l'essence de votre profil astral.
               </p>
               
               <button
                 onClick={handleProductAction}
                 disabled={!result.imageUrl}
-                className={`w-full py-4 bg-yellow-600 text-gray-900 text-xl font-bold rounded-xl shadow-2xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-yellow-400/70 ${!result.imageUrl ? 'opacity-50 cursor-not-allowed' : 'shadow-yellow-500/50'}`}
+                // [MODIFIÉ] Bouton uniformisé
+                className={`w-full py-4 bg-indigo-600 text-white text-xl font-bold rounded-lg shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 ${!result.imageUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Créer mon Produit Personnalisé
               </button>
@@ -285,8 +298,9 @@ const Quiz = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black/90 font-sans p-4" style={{backgroundImage: 'radial-gradient(circle at center, rgba(30, 20, 50, 0.9) 0%, rgba(10, 10, 20, 1) 100%)'}}>
-      <div className="w-full max-w-6xl p-8 md:p-12 bg-black/40 rounded-3xl shadow-2xl border border-purple-900/50 backdrop-blur-sm">
+    // [MODIFIÉ] Conteneur principal centré
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 font-sans p-4">
+      <div className="w-full max-w-6xl p-8 md:p-12 bg-white rounded-3xl shadow-2xl border border-gray-200">
         {renderContent()}
       </div>
     </div>
@@ -295,7 +309,7 @@ const Quiz = () => {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <Quiz />
     </div>
   );
