@@ -195,8 +195,7 @@ const Quiz = () => {
           <p className="text-lg font-semibold text-gray-500">
             Étape {currentQuestionIndex + 1} sur {maxQuestions}
           </p>
-          {/* COULEUR DE TEST ROUGE VIF : L'élément à identifier */}
-          <h2 className="text-4xl font-bold text-red-600 max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-indigo-900 max-w-4xl mx-auto">
             {currentQuestion.label}
           </h2>
           <div className="w-full max-w-xl mx-auto pt-4">
@@ -240,7 +239,7 @@ const Quiz = () => {
           </h2>
           <div className="flex flex-col lg:flex-row gap-8 bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 mx-auto">
             
-            <div className="lg:w-2/3 space-y-6">
+            <div className="lg:w-2/3 space-y-6 text-left">
               <div className="space-y-4">
                 <h3 className="text-2xl font-bold text-indigo-900 mb-4">Votre Voyage Astral</h3>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.firstHalf}</p>
