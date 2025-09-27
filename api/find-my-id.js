@@ -1,7 +1,6 @@
-// Note: Pas besoin de "import fetch from 'node-fetch';"
-// L'environnement Vercel fournit 'fetch' automatiquement.
+const fetch = require('node-fetch');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   const printifyApiKey = process.env.PRINTIFY_API_KEY;
 
   if (!printifyApiKey) {
@@ -11,20 +10,21 @@ export default async function handler(req, res) {
   try {
     const response = await fetch('https://api.printify.com/v1/shops.json', {
       headers: {
-        'Authorization': Bearer ,
+        'Authorization': `Bearer ${printifyApiKey}`,
       },
     });
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(Erreur de l'API Printify:   - );
+      throw new Error(`Erreur de l'API Printify: ${response.status} ${response.statusText} - ${errorBody}`);
     }
 
     const stores = await response.json();
+    // On renvoie la liste des boutiques trouv√©es
     res.status(200).json(stores);
 
   } catch (error) {
     console.error('Erreur dans /api/find-my-id:', error.message);
-    res.status(500).json({ error: 'Erreur serveur lors de la rÈcupÈration des boutiques.' });
+    res.status(500).json({ error: 'Erreur serveur lors de la r√©cup√©ration des boutiques.' });
   }
-}
+};
