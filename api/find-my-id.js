@@ -1,4 +1,5 @@
-import fetch from 'node-fetch';
+// Note: Pas besoin de "import fetch from 'node-fetch';"
+// L'environnement Vercel fournit 'fetch' automatiquement.
 
 export default async function handler(req, res) {
   const printifyApiKey = process.env.PRINTIFY_API_KEY;
@@ -15,7 +16,8 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      throw new Error(Erreur de l'API Printify: );
+      const errorBody = await response.text();
+      throw new Error(Erreur de l'API Printify:   - );
     }
 
     const stores = await response.json();
