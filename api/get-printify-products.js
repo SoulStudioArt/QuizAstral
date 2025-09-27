@@ -14,44 +14,35 @@ export default async function handler(req, res) {
   }
 
   try {
-    const blueprintsResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/blueprints.json`, {
+    // --- CHANGEMENT IMPORTANT ICI ---
+    // On interroge les "products" (produits publiés) au lieu des "blueprints".
+    const productsResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/products.json`, {
       headers: { 'Authorization': `Bearer ${printifyApiKey}` },
     });
 
-    if (!blueprintsResponse.ok) {
-      const errorBody = await blueprintsResponse.text();
-      throw new Error(`Erreur Printify API (blueprints): ${blueprintsResponse.status} ${blueprintsResponse.statusText} - ${errorBody}`);
+    if (!productsResponse.ok) {
+      const errorBody = await productsResponse.text();
+      throw new Error(`Erreur Printify API (products): ${productsResponse.status} ${productsResponse.statusText} - ${errorBody}`);
     }
-    const blueprintsData = await blueprintsResponse.json();
 
-    // N'oubliez pas de personnaliser cette ligne avec le mot-clé de votre produit
-    const relevantBlueprints = blueprintsData.filter(bp => 
-      bp.title.toLowerCase().includes('canvas') // Mettez votre mot-clé ici
-    );
+    const productsData = await productsResponse.json();
 
-    const productsWithVariants = await Promise.all(
-      relevantBlueprints.map(async (blueprint) => {
-        const variantsResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/blueprints/${blueprint.id}/print_providers/${blueprint.print_provider_id}/variants.json`, {
-          headers: { 'Authorization': `Bearer ${printifyApiKey}` }
-        });
-        if (!variantsResponse.ok) return null;
+    // On formate les données pour les rendre propres et simples pour la page produit
+    const formattedProducts = productsData.data.map(product => {
+      return {
+        title: product.title,
+        // Les IDs importants se trouvent dans les variantes pour les produits publiés
+        blueprint_id: product.variants[0].blueprint_id, 
+        print_provider_id: product.variants[0].print_provider_id,
+        variants: product.variants.map(v => ({
+          id: v.id,
+          title: v.title,
+          price: v.price / 100,
+        }))
+      };
+    });
 
-        const variantsData = await variantsResponse.json();
-
-        return {
-          title: blueprint.title,
-          blueprint_id: blueprint.id,
-          print_provider_id: blueprint.print_provider_id,
-          variants: variantsData.variants.map(v => ({
-            id: v.id,
-            title: v.title,
-            price: v.price / 100,
-          })),
-        };
-      })
-    );
-
-    res.status(200).json(productsWithVariants.filter(p => p !== null));
+    res.status(200).json(formattedProducts);
 
   } catch (error) {
     console.error('Erreur dans /api/get-printify-products:', error.message);
