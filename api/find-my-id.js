@@ -1,6 +1,6 @@
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const printifyApiKey = process.env.PRINTIFY_API_KEY;
 
   if (!printifyApiKey) {
@@ -20,11 +20,10 @@ module.exports = async (req, res) => {
     }
 
     const stores = await response.json();
-    // On renvoie la liste des boutiques trouvées
     res.status(200).json(stores);
 
   } catch (error) {
     console.error('Erreur dans /api/find-my-id:', error.message);
     res.status(500).json({ error: 'Erreur serveur lors de la récupération des boutiques.' });
   }
-};
+}
