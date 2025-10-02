@@ -26,20 +26,31 @@ export default async function handler(req, res) {
     const productsData = await productsResponse.json();
 
     const formattedProducts = productsData.data.map(product => {
-      // NOUVELLE LOGIQUE : On ne garde que les variantes qui sont "enabled" (activées)
-      const enabledVariants = product.variants.filter(v => v.is_enabled);
+      // 1. On filtre les variantes pour ne garder que celles qui sont actives ET synchronisées avec Shopify
+      const enabledVariants = product.variants.filter(v => v.is_enabled && v.external);
+
+      // 2. On transforme les données pour chaque variante
+      const mappedVariants = enabledVariants.map(v => {
+        // On utilise l'optional chaining (?.) pour éviter les erreurs si une donnée manque
+        const shopifyVariantId = v.external?.variant_id?.split('/')?.pop() ?? null;
+
+        return {
+          id: v.id, // ID de la variante Printify
+          title: v.title,
+          price: v.price / 100,
+          shopify_variant_id: shopifyVariantId // L'ID Shopify, maintenant de façon sûre
+        };
+      })
+      // 3. On s'assure de ne garder que les variantes qui ont bien un ID Shopify après la transformation
+      .filter(v => v.shopify_variant_id); 
 
       return {
         title: product.title,
-        blueprint_id: enabledVariants.length > 0 ? enabledVariants[0].blueprint_id : null, 
+        blueprint_id: enabledVariants.length > 0 ? enabledVariants[0].blueprint_id : null,
         print_provider_id: enabledVariants.length > 0 ? enabledVariants[0].print_provider_id : null,
-        variants: enabledVariants.map(v => ({
-          id: v.id,
-          title: v.title,
-          price: v.price / 100,
-        }))
+        variants: mappedVariants
       };
-    }).filter(p => p.variants.length > 0); // On s'assure de ne pas garder de produits sans variantes actives
+    }).filter(p => p.variants.length > 0); // On ne garde que les produits qui ont au moins une variante valide
 
     res.status(200).json(formattedProducts);
 
