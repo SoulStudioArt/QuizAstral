@@ -35,7 +35,7 @@ export default async function handler(req, res) {
         variants: enabledVariants.map(v => ({
           id: v.id, // ID de la variante Printify
           title: v.title,
-          price: v.price / 100
+          price: v.price / 100,
           sku: v.sku, // 
         }))
       };
