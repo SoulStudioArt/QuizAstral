@@ -8,43 +8,45 @@ export default async function handler(req, res) {
 
   const printifyApiKey = process.env.PRINTIFY_API_KEY;
   const printifyStoreId = process.env.PRINTIFY_STORE_ID;
+  const printifyProductId = "68afb9338965a97df2049e3e";
 
   if (!printifyApiKey || !printifyStoreId) {
-    return res.status(500).json({ error: 'Configuration Printify incomplète sur le serveur.' });
+    return res.status(500).json({ error: 'Configuration Printify incomplète.' });
   }
 
   try {
-    const productsResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/products.json`, {
+    const productResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/products/${printifyProductId}.json`, {
       headers: { 'Authorization': `Bearer ${printifyApiKey}` },
     });
 
-    if (!productsResponse.ok) {
-      const errorBody = await productsResponse.text();
-      throw new Error(`Erreur Printify API (products): ${productsResponse.status} ${productsResponse.statusText} - ${errorBody}`);
+    if (!productResponse.ok) {
+      const errorBody = await productResponse.text();
+      throw new Error(`Erreur API Printify: ${productResponse.status} ${errorBody}`);
     }
 
-    const productsData = await productsResponse.json();
+    const productData = await productResponse.json();
+    const enabledVariants = productData.variants.filter(v => v.is_enabled && v.external);
 
-    const formattedProducts = productsData.data.map(product => {
-      const enabledVariants = product.variants.filter(v => v.is_enabled);
+    const mappedVariants = enabledVariants.map(v => ({
+      id: v.id,
+      title: v.title,
+      price: v.price / 100,
+      sku: v.sku,
+      shopify_variant_id: v.external?.id ?? null
+    })).filter(v => v.shopify_variant_id && v.sku);
 
-      return {
-        title: product.title,
-        blueprint_id: enabledVariants.length > 0 ? enabledVariants[0].blueprint_id : null,
-        print_provider_id: enabledVariants.length > 0 ? enabledVariants[0].print_provider_id : null,
-        variants: enabledVariants.map(v => ({
-          id: v.id, // ID de la variante Printify
-          title: v.title,
-          price: v.price / 100,
-          sku: v.sku, // 
-        }))
-      };
-    }).filter(p => p.variants.length > 0);
-
-    res.status(200).json(formattedProducts);
+    const formattedProduct = {
+      title: productData.title,
+      // === AJOUT DES INFORMATIONS MANQUANTES ICI ===
+      blueprint_id: productData.blueprint_id,
+      print_provider_id: productData.print_provider_id,
+      variants: mappedVariants
+    };
+    
+    res.status(200).json([formattedProduct]);
 
   } catch (error) {
     console.error('Erreur dans /api/get-printify-products:', error.message);
-    res.status(500).json({ error: 'Erreur serveur lors de la récupération des produits Printify.', details: error.message });
+    res.status(500).json({ error: 'Erreur serveur.', details: error.message });
   }
 }
