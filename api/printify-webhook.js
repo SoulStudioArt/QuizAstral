@@ -3,12 +3,11 @@ import fetch from 'node-fetch';
 import getRawBody from 'raw-body';
 
 export default async function (req, res) {
-  // 1. Vérification de la méthode POST (inchangé)
+  // --- Section 1: Validation du Webhook Shopify (inchangée) ---
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
-  // 2. Validation du webhook Shopify (inchangé)
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
@@ -26,6 +25,7 @@ export default async function (req, res) {
   }
   
   try {
+    // --- Section 2: Traitement de la commande ---
     const order = JSON.parse(rawBody.toString('utf8'));
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
@@ -42,28 +42,29 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Aucun item personnalisé.' });
     }
 
+    // --- Section 3: Récupération dynamique des données depuis les propriétés de la commande ---
     const customImageProperty = productItem.properties.find(prop => prop.name === 'Image Personnalisée');
+    const variantProperty = productItem.properties.find(prop => prop.name === '_printify_variant_id');
+    const blueprintProperty = productItem.properties.find(p => p.name === '_printify_blueprint_id');
+    const providerProperty = productItem.properties.find(p => p.name === '_printify_provider_id');
+
     const imageUrl = customImageProperty ? customImageProperty.value : null;
+    const printifyVariantId = variantProperty ? parseInt(variantProperty.value, 10) : null;
+    const printifyBlueprintId = blueprintProperty ? parseInt(blueprintProperty.value, 10) : null;
+    const printifyPrintProviderId = providerProperty ? parseInt(providerProperty.value, 10) : null;
 
-    if (!imageUrl) {
-      console.warn('Aucune URL d\'image personnalisée trouvée pour la commande:', order.order_number);
-      return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
-    }
-
-    const printifyVariantProperty = productItem.properties.find(prop => prop.name === '_printify_variant_id');
-    const printifyVariantId = printifyVariantProperty ? parseInt(printifyVariantProperty.value, 10) : null;
-    
-    // NOTE : On récupère ces valeurs depuis les variables d'environnement.
-    // Assurez-vous qu'elles correspondent au produit "Toile".
-    const printifyBlueprintId = parseInt(process.env.PRINTIFY_BLUEPRINT_ID, 10);
-    const printifyPrintProviderId = parseInt(process.env.PRINTIFY_PRINT_PROVIDER_ID, 10);
-
-    if (!printifyVariantId || !printifyBlueprintId || !printifyPrintProviderId) {
-      console.error('Données Printify manquantes (variant, blueprint ou provider ID) pour la commande:', order.order_number);
+    // Validation des données récupérées
+    if (!imageUrl || !printifyVariantId || !printifyBlueprintId || !printifyPrintProviderId) {
+      console.error('Données de personnalisation manquantes dans la commande:', order.order_number, {
+        imageUrl: !!imageUrl,
+        variantId: printifyVariantId,
+        blueprintId: printifyBlueprintId,
+        providerId: printifyPrintProviderId,
+      });
       return res.status(400).json({ error: 'Données de commande Printify manquantes.' });
     }
     
-    // Construction du payload pour l'API Printify
+    // --- Section 4: Construction et envoi de la commande à Printify ---
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
       line_items: [
@@ -72,9 +73,6 @@ export default async function (req, res) {
           blueprint_id: printifyBlueprintId, 
           print_provider_id: printifyPrintProviderId,
           quantity: productItem.quantity,
-          // =====================================================================
-          // === LA CORRECTION EST ICI : J'ai restauré la bonne structure       ===
-          // =====================================================================
           print_areas: {
             "front": [
               {
