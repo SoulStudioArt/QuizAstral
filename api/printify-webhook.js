@@ -35,7 +35,6 @@ export default async function (req, res) {
       return res.status(500).json({ error: 'Configuration Printify incomplète.' });
     }
 
-    // On cherche le produit qui a nos propriétés personnalisées
     const productItem = order.line_items.find(item => item.properties && item.properties.length > 0);
 
     if (!productItem) {
@@ -43,9 +42,6 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Aucun item personnalisé.' });
     }
 
-    // ==========================================================
-    // === CORRECTION N°1 : On cherche le bon nom de propriété ===
-    // ==========================================================
     const customImageProperty = productItem.properties.find(prop => prop.name === 'Image Personnalisée');
     const imageUrl = customImageProperty ? customImageProperty.value : null;
 
@@ -54,20 +50,16 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Commande sans image personnalisée. Pas d\'action requise.' });
     }
 
-    // ======================================================================================
-    // === CORRECTION N°2 : On récupère l'ID de variante Printify depuis la commande Shopify ===
-    // ======================================================================================
     const printifyVariantProperty = productItem.properties.find(prop => prop.name === '_printify_variant_id');
     const printifyVariantId = printifyVariantProperty ? parseInt(printifyVariantProperty.value, 10) : null;
     
-    // On a besoin du blueprint_id et du print_provider_id aussi. Il faut les ajouter aux propriétés du panier !
-    // Pour l'instant, on va les mettre en dur, mais il faudra les ajouter.
-    // NOTE : Assurez-vous que ces IDs correspondent au type de produit (ex: Toile)
-    const printifyBlueprintId = 1159; // ID pour "Matte Canvas, Stretched"
-    const printifyPrintProviderId = 105; // ID pour "SPOKE Custom Products" (exemple)
+    // NOTE : On récupère ces valeurs depuis les variables d'environnement.
+    // Assurez-vous qu'elles correspondent au produit "Toile".
+    const printifyBlueprintId = parseInt(process.env.PRINTIFY_BLUEPRINT_ID, 10);
+    const printifyPrintProviderId = parseInt(process.env.PRINTIFY_PRINT_PROVIDER_ID, 10);
 
-    if (!printifyVariantId) {
-      console.error('Impossible de trouver _printify_variant_id dans les propriétés de la commande:', order.order_number);
+    if (!printifyVariantId || !printifyBlueprintId || !printifyPrintProviderId) {
+      console.error('Données Printify manquantes (variant, blueprint ou provider ID) pour la commande:', order.order_number);
       return res.status(400).json({ error: 'Données de commande Printify manquantes.' });
     }
     
@@ -76,21 +68,24 @@ export default async function (req, res) {
       external_id: `shopify-order-${order.id}`,
       line_items: [
         {
-          // On utilise maintenant les IDs dynamiques et récupérés
           variant_id: printifyVariantId,
           blueprint_id: printifyBlueprintId, 
           print_provider_id: printifyPrintProviderId,
           quantity: productItem.quantity,
-          print_areas: [
-            {
-              placeholders: [
-                {
-                  position: "front",
-                  images: [ { src: imageUrl, x: 0.5, y: 0.5, scale: 1, angle: 0 } ]
-                }
-              ]
-            }
-          ]
+          // =====================================================================
+          // === LA CORRECTION EST ICI : J'ai restauré la bonne structure       ===
+          // =====================================================================
+          print_areas: {
+            "front": [
+              {
+                "src": imageUrl,
+                "x": 0.5,
+                "y": 0.5,
+                "scale": 1,
+                "angle": 0
+              }
+            ]
+          }
         }
       ],
       shipping_method: 1, // Méthode de livraison standard
