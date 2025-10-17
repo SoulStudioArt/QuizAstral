@@ -26,27 +26,19 @@ export default async function handler(req, res) {
 
     const productData = await productResponse.json();
 
-    // ==========================================================
-    // === CORRECTION : On simplifie le premier filtre ici      ===
-    // ==========================================================
-    const enabledVariants = productData.variants.filter(v => v.is_enabled);
-
-    const mappedVariants = enabledVariants.map(v => ({
-      id: v.id,
-      title: v.title,
-      price: v.price / 100,
-      sku: v.sku,
-      // On utilise l'optional chaining pour trouver l'ID Shopify en toute sécurité
-      shopify_variant_id: v.external?.id ?? null
-    }))
-    // On garde un deuxième filtre robuste pour s'assurer d'avoir les bonnes données
-    .filter(v => v.shopify_variant_id && v.sku);
+    // FINAL DEBUG: Let's see what is inside v.external for each variant
+    const mappedVariants = productData.variants
+      .filter(v => v.is_enabled)
+      .map(v => ({
+        title: v.title,
+        sku: v.sku,
+        is_enabled: v.is_enabled,
+        external_data: v.external // We will just output the entire external object
+      }));
 
     const formattedProduct = {
       title: productData.title,
-      blueprint_id: productData.blueprint_id,
-      print_provider_id: productData.print_provider_id,
-      variants: mappedVariants // Cette liste ne sera plus vide
+      variants_debug: mappedVariants // Sending this under a "variants_debug" key
     };
     
     res.status(200).json([formattedProduct]);
