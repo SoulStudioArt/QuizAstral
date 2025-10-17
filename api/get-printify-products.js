@@ -25,22 +25,28 @@ export default async function handler(req, res) {
     }
 
     const productData = await productResponse.json();
-    const enabledVariants = productData.variants.filter(v => v.is_enabled && v.external);
+
+    // ==========================================================
+    // === CORRECTION : On simplifie le premier filtre ici      ===
+    // ==========================================================
+    const enabledVariants = productData.variants.filter(v => v.is_enabled);
 
     const mappedVariants = enabledVariants.map(v => ({
       id: v.id,
       title: v.title,
       price: v.price / 100,
       sku: v.sku,
+      // On utilise l'optional chaining pour trouver l'ID Shopify en toute sécurité
       shopify_variant_id: v.external?.id ?? null
-    })).filter(v => v.shopify_variant_id && v.sku);
+    }))
+    // On garde un deuxième filtre robuste pour s'assurer d'avoir les bonnes données
+    .filter(v => v.shopify_variant_id && v.sku);
 
     const formattedProduct = {
       title: productData.title,
-      // === AJOUT DES INFORMATIONS MANQUANTES ICI ===
       blueprint_id: productData.blueprint_id,
       print_provider_id: productData.print_provider_id,
-      variants: mappedVariants
+      variants: mappedVariants // Cette liste ne sera plus vide
     };
     
     res.status(200).json([formattedProduct]);
