@@ -11,7 +11,7 @@ const questions = [
   { id: 'lifeLesson', label: 'Quelle est la plus grande leçon de vie que vous ayez apprise ?', placeholder: 'Ex: La patience est une vertu', type: 'textarea' },
 ];
 
-const SHOPIFY_PRODUCT_HANDLE = 'mystical-eye-mandala-canvas-art-1';
+const SHOPIFY_PRODUCT_HANDLE = 'mystical-eye-mandala-canvas-art-home-decor-spiritual-wall-art-meditation-decor-gift-for-mindfulness-boho-art-piece';
 const SHOPIFY_URL = 'https://soulstudioart.com';
 
 
