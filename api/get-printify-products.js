@@ -8,7 +8,9 @@ export default async function handler(req, res) {
 
   const printifyApiKey = process.env.PRINTIFY_API_KEY;
   const printifyStoreId = process.env.PRINTIFY_STORE_ID;
-  const printifyProductId = "68afb9338965a97df2049e3e";
+  
+  // Assurez-vous que cet ID correspond au produit que vous utilisez dans Shopify
+  const printifyProductId = "68afb9338965a97df2049e3e"; 
 
   if (!printifyApiKey || !printifyStoreId) {
     return res.status(500).json({ error: 'Configuration Printify incomplète.' });
@@ -26,19 +28,20 @@ export default async function handler(req, res) {
 
     const productData = await productResponse.json();
 
-    // FINAL DEBUG: Let's see what is inside v.external for each variant
     const mappedVariants = productData.variants
-      .filter(v => v.is_enabled)
+      .filter(v => v.is_enabled) // On garde seulement les variantes activées
       .map(v => ({
+        id: v.id,
         title: v.title,
-        sku: v.sku,
-        is_enabled: v.is_enabled,
-        external_data: v.external // We will just output the entire external object
+        price: v.price / 100,
+        sku: v.sku
       }));
 
     const formattedProduct = {
       title: productData.title,
-      variants_debug: mappedVariants // Sending this under a "variants_debug" key
+      blueprint_id: productData.blueprint_id,
+      print_provider_id: productData.print_provider_id,
+      variants: mappedVariants // On utilise le bon nom de clé : "variants"
     };
     
     res.status(200).json([formattedProduct]);
