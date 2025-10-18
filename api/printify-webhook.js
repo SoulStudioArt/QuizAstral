@@ -77,8 +77,11 @@ export default async function (req, res) {
               { "src": imageUrl, "x": 0.5, "y": 0.5, "scale": 1, "angle": 0 }
             ]
           },
+          // =====================================================================
+          // === LA CORRECTION EST ICI : On utilise "mirror", qui est autorisé ===
+          // =====================================================================
           "print_details": {
-            "print_on_side": "stretch" // La seule modification est ici
+            "print_on_side": "mirror"
           }
         }
       ],
