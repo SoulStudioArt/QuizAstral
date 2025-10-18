@@ -42,7 +42,7 @@ export default async function (req, res) {
       return res.status(200).json({ message: 'Aucun item personnalisé.' });
     }
 
-    // --- Section 3: Récupération dynamique des données ---
+    // --- Section 3: Récupération dynamique des données depuis les propriétés de la commande ---
     const customImageProperty = productItem.properties.find(prop => prop.name === 'Image Personnalisée');
     const variantProperty = productItem.properties.find(prop => prop.name === '_printify_variant_id');
     const blueprintProperty = productItem.properties.find(p => p.name === '_printify_blueprint_id');
@@ -54,7 +54,12 @@ export default async function (req, res) {
     const printifyPrintProviderId = providerProperty ? parseInt(providerProperty.value, 10) : null;
 
     if (!imageUrl || !printifyVariantId || !printifyBlueprintId || !printifyPrintProviderId) {
-      // ... (gestion de l'erreur inchangée)
+      console.error('Données de personnalisation manquantes dans la commande:', order.order_number, {
+        imageUrl: !!imageUrl,
+        variantId: printifyVariantId,
+        blueprintId: printifyBlueprintId,
+        providerId: printifyPrintProviderId,
+      });
       return res.status(400).json({ error: 'Données de commande Printify manquantes.' });
     }
     
@@ -72,18 +77,24 @@ export default async function (req, res) {
               { "src": imageUrl, "x": 0.5, "y": 0.5, "scale": 1, "angle": 0 }
             ]
           },
-          // =====================================================================
-          // === LA CORRECTION EST ICI : On ajoute le paramètre pour le bord   ===
-          // =====================================================================
           "print_details": {
-            "print_on_side": "mirror"
+            "print_on_side": "stretch" // La seule modification est ici
           }
         }
       ],
       shipping_method: 1,
       send_shipping_notification: true,
       address_to: {
-        // ... (adresse inchangée)
+        first_name: order.shipping_address.first_name,
+        last_name: order.shipping_address.last_name,
+        email: order.contact_email,
+        phone: order.shipping_address.phone || 'N/A',
+        country: order.shipping_address.country_code,
+        region: order.shipping_address.province_code || '',
+        address1: order.shipping_address.address1,
+        address2: order.shipping_address.address2 || '',
+        city: order.shipping_address.city,
+        zip: order.shipping_address.zip
       }
     };
 
