@@ -21,22 +21,26 @@ export default async function (req, res) {
 
     const imagePrompt = `
       Générez une œuvre d'art numérique abstraite et mystique de haute qualité, inspirée par une "Révélation Céleste".
+      L'œuvre doit remplir la totalité de l'image, sans aucune marge, bordure ou espace blanc. C'est une image "full bleed".
       L'image doit incorporer des éléments visuels liés au cosmos, à l'astrologie, aux nébuleuses, aux motifs géométriques sacrés et aux symboles astraux.
       Les couleurs doivent être vibrantes et profondes. Le style doit être élégant et moderne, comme de l'art de studio pour l'âme.
       La composition doit être harmonieuse avec les éléments principaux bien centrés.
       L'image doit représenter visuellement la révélation personnalisée de ${answers.name}, en tenant compte de ses aspirations et de sa personnalité.
     `;
 
-    // On définit clairement ce qu'on ne veut PAS voir
-    const negativePromptText = "visage, portrait, figure humaine";
+    // On renforce le prompt négatif pour inclure les bordures et le texte
+    const negativePromptText = "visage, portrait, figure humaine, écriture, texte, lettres, bordure, cadre, marge, espace blanc";
 
-    // On ajoute le negativePrompt au payload
+    // On ajoute le negativePrompt et le ratio d'aspect au payload
     const payloadImage = { 
       instances: { 
         prompt: imagePrompt,
         negativePrompt: negativePromptText
       }, 
-      parameters: { "sampleCount": 1 } 
+      parameters: { 
+        "sampleCount": 1,
+        "aspectRatio": "1:1" // Garantit une image carrée de haute qualité
+      } 
     };
     
     // ======================================================================
