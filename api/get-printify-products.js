@@ -29,8 +29,12 @@ export default async function handler(req, res) {
     const productData = await productResponse.json();
 
     const mappedVariants = productData.variants
-      .filter(v => v.is_enabled) // On garde seulement les variantes activées
-      .map(v => ({
+      .filter(v => v.is_enabled) // 1. On garde seulement les variantes activées
+      // ==========================================================
+      // === LA CORRECTION EST ICI : On ajoute le tri numérique   ===
+      // ==========================================================
+      .sort((a, b) => parseInt(a.title) - parseInt(b.title))
+      .map(v => ({ // 2. On transforme les données
         id: v.id,
         title: v.title,
         price: v.price / 100,
@@ -41,7 +45,7 @@ export default async function handler(req, res) {
       title: productData.title,
       blueprint_id: productData.blueprint_id,
       print_provider_id: productData.print_provider_id,
-      variants: mappedVariants // On utilise le bon nom de clé : "variants"
+      variants: mappedVariants
     };
     
     res.status(200).json([formattedProduct]);
