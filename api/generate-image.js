@@ -16,19 +16,20 @@ export default async function (req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     // ======================================================================
-    // === NOUVEAU PROMPT : DIRECTIF ET ABSTRAIT ===
+    // === NOUVEAU PROMPT AJUSTÉ SELON VOTRE VISION ===
     // ======================================================================
 
     const imagePrompt = `
-      Générez une œuvre d'art numérique de style purement abstrait et non-figuratif.
-      Le thème est une interprétation cosmique et mystique basée sur les informations suivantes : ${answers.name}, né(e) le ${answers.birthDate}.
-      La composition doit être centrée sur un mandala complexe, des motifs de géométrie sacrée, des nébuleuses colorées, des flux d'énergie lumineux, des constellations stylisées et des symboles astraux.
+      Générez une œuvre d'art numérique de haute qualité, de style purement abstrait et mystique.
+      Le thème est une interprétation cosmique et énergétique basée sur les informations de ${answers.name}.
+      La composition doit être centrée sur une géométrie astrale complexe, des nébuleuses colorées, des flux d'énergie lumineux et des symboles astraux.
+      L'œuvre peut subtilement incorporer le prénom '${answers.name}' ou la date '${answers.birthDate}', stylisés comme des constellations ou des motifs géométriques.
       L'œuvre doit remplir la totalité de l'image, sans aucune marge ou bordure (full bleed).
       Les couleurs doivent être vibrantes et profondes.
     `;
 
-    // Un prompt négatif extrêmement renforcé
-    const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, nez, bouche, main, cheveux, photo-réaliste, écriture, texte, lettres, bordure, cadre, marge";
+    // Un prompt négatif plus ciblé, qui autorise le texte.
+    const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, nez, bouche, main, cheveux, photo-réaliste, bordure, cadre, marge";
 
     const payloadImage = { 
       instances: { 
