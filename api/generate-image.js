@@ -16,20 +16,19 @@ export default async function (req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     // ======================================================================
-    // === MODIFICATIONS APPORTÉES ICI (PROMPT "BLINDÉ") ===
+    // === LE NOUVEAU PROMPT "JUSTE MILIEU" ===
     // ======================================================================
 
     const imagePrompt = `
-      Générez une œuvre d'art numérique de haute qualité.
-      Le style doit être entièrement abstrait et non-figuratif.
-      Le thème est une "Révélation Céleste" inspirée par ${answers.name}.
-      L'œuvre doit être centrée sur un mandala cosmique complexe, des motifs de géométrie sacrée, des flux d'énergie colorés et des symboles astraux.
-      L'œuvre doit remplir la totalité de l'image, sans aucune marge, bordure ou espace blanc (full bleed).
-      Les couleurs doivent être vibrantes et profondes.
+      Générez une œuvre d'art numérique de haute qualité, inspirée par une "Révélation Céleste" pour ${answers.name}.
+      Le style est un mélange d'art mystique et cosmique.
+      L'œuvre doit être riche en détails, incorporant des motifs de géométrie sacrée, des symboles astraux complexes, des nébuleuses colorées et des flux d'énergie lumineux.
+      L'œuvre doit remplir la totalité de l'image, sans aucune marge ou bordure (full bleed).
+      Les couleurs doivent être vibrantes et profondes, le rendu doit être élégant et sophistiqué.
     `;
 
-    // On renforce considérablement le prompt négatif
-    const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, yeux, nez, bouche, écriture, texte, lettres, bordure, cadre, marge, espace blanc";
+    // Un prompt négatif ciblé uniquement sur ce qu'on ne veut pas.
+    const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, yeux, nez, bouche, photo-réaliste, enfantin, dessin simple";
 
     const payloadImage = { 
       instances: { 
