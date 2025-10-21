@@ -16,15 +16,15 @@ export default async function (req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     // ======================================================================
-    // === PHASE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ===
+    // === PHASE 1.A : L'IA "ARCHITECTE" CRÉE LE PLAN (DESCRIPTION + PROMPT) ===
     // ======================================================================
     
     const architectPrompt = `
       Tu es un directeur artistique et un poète symboliste. En te basant sur les informations suivantes :
-      - Prénom: ${answers.name}
-      - Date de naissance: ${answers.birthDate}
-      - Trait de personnalité: ${answers.personalityTrait}
-      - Plus grand rêve: ${answers.biggestDream}
+      - Prénom: ${answers.name || 'Anonyme'}
+      - Date de naissance: ${answers.birthDate || 'Inconnue'}
+      - Trait de personnalité: ${answers.personalityTrait || 'Mystérieux'}
+      - Plus grand rêve: ${answers.biggestDream || 'Explorer l\'inconnu'}
 
       Ta mission est de produire deux choses distinctes sous forme d'objet JSON :
       1.  **descriptionPourLeClient**: Une description poétique de 2-3 phrases qui explique les symboles visuels d'une œuvre d'art imaginaire. Fais le lien entre ces symboles (constellations, couleurs, motifs) et les réponses du client. Ce texte doit être inspirant.
@@ -47,12 +47,13 @@ export default async function (req, res) {
     }
 
     const resultArchitect = await responseArchitect.json();
+    // On parse le texte JSON retourné par l'IA
     const plan = JSON.parse(resultArchitect?.candidates?.[0]?.content?.parts?.[0]?.text);
 
     const { descriptionPourLeClient, promptPourImage } = plan;
 
     // ======================================================================
-    // === PHASE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ===
+    // === PHASE 1.B : L'IA "ARTISTE" EXÉCUTE LE PLAN ===
     // ======================================================================
 
     const finalImagePrompt = `
@@ -100,7 +101,9 @@ export default async function (req, res) {
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
-    // On renvoie les deux informations
+    // ======================================================================
+    // === PHASE 1.C : On renvoie les deux informations synchronisées ===
+    // ======================================================================
     res.status(200).json({ imageUrl, imageDescription: descriptionPourLeClient });
 
   } catch (error) {
