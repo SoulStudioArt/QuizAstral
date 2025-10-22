@@ -30,17 +30,17 @@ export default async function (req, res) {
       Réponds UNIQUEMENT avec un objet JSON valide au format : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
     `;
 
-    // ======================================================================
-    // === LA CORRECTION EST ICI ===
-    // ======================================================================
     const payloadArchitect = {
       contents: [{ role: "user", parts: [{ text: architectPrompt }] }],
       generationConfig: {
         response_mime_type: "application/json",
       }
     };
-    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    
     // ======================================================================
+    // === LA CORRECTION EST ICI : On utilise le bon nom de modèle Gemini ===
+    // ======================================================================
+    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, {
       method: 'POST',
