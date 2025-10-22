@@ -26,9 +26,10 @@ export default async function (req, res) {
       generationConfig: { response_mime_type: "application/json" }
     };
     // ======================================================================
-    // === LA CORRECTION EST ICI : On utilise le nom de modèle "flash"      ===
+    // === LA CORRECTION EST ICI : On utilise le nom de modèle qui fonctionne ===
     // ======================================================================
-    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+    
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     if (!responseArchitect.ok) {
       const errorBody = await responseArchitect.text();
