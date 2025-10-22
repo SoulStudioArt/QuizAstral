@@ -2,9 +2,7 @@ import fetch from 'node-fetch';
 import { put } from '@vercel/blob';
 
 export default async function (req, res) {
-  // Cette ligne garantit que seule la méthode POST est acceptée.
   if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
     return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
   }
 
@@ -17,6 +15,7 @@ export default async function (req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
+    // --- PHASE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
     const architectPrompt = `
       Tu es un directeur artistique et un poète symboliste. En te basant sur les informations suivantes :
       - Prénom: ${answers.name || 'Anonyme'}
@@ -38,7 +37,10 @@ export default async function (req, res) {
       }
     };
     
-    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // ======================================================================
+    // === LA CORRECTION EST ICI : On utilise le nom du modèle le plus récent ===
+    // ======================================================================
+    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, {
       method: 'POST',
@@ -57,6 +59,7 @@ export default async function (req, res) {
 
     const { descriptionPourLeClient, promptPourImage } = plan;
 
+    // --- PHASE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ---
     const finalImagePrompt = `${promptPourImage}. L'œuvre doit remplir la totalité de l'image, sans aucune marge ou bordure (full bleed). Le rendu doit être élégant, sophistiqué et de haute qualité.`;
     const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, nez, bouche, main, cheveux, photo-réaliste, bordure, cadre, marge";
 
