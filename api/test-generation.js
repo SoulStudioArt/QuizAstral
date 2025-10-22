@@ -2,7 +2,6 @@ import fetch from 'node-fetch';
 
 export default async function (req, res) {
   try {
-    // On récupère des informations de test depuis l'URL (ou on utilise des valeurs par défaut)
     const name = req.query.name || 'Clara';
     const birthDate = req.query.birthDate || '15 mai 1990';
     const personalityTrait = req.query.personalityTrait || 'Créative';
@@ -26,9 +25,16 @@ export default async function (req, res) {
       contents: [{ role: "user", parts: [{ text: architectPrompt }] }],
       generationConfig: { response_mime_type: "application/json" }
     };
-    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
+    // ======================================================================
+    // === LA CORRECTION EST ICI : On utilise le nom de modèle "gemini-pro" ===
+    // ======================================================================
+    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
-    if (!responseArchitect.ok) throw new Error(`Erreur Gemini: ${responseArchitect.statusText}`);
+    if (!responseArchitect.ok) {
+      const errorBody = await responseArchitect.text();
+      console.error("Erreur détaillée de l'API Gemini (Test):", errorBody);
+      throw new Error(`Erreur Gemini: ${responseArchitect.statusText}`);
+    }
     const resultArchitect = await responseArchitect.json();
     const plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
     const { descriptionPourLeClient, promptPourImage } = plan;
