@@ -16,7 +16,7 @@ export default async function (req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     // ======================================================================
-    // === ON REVIENT AU PROMPT QUI FONCTIONNAIT BIEN ===
+    // === NOUVEAU PROMPT AJUSTÉ SELON VOTRE VISION ===
     // ======================================================================
 
     const imagePrompt = `
@@ -28,7 +28,7 @@ export default async function (req, res) {
       Les couleurs doivent être vibrantes et profondes.
     `;
 
-    // Le prompt négatif qui fonctionnait.
+    // Un prompt négatif plus ciblé, qui autorise le texte.
     const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, nez, bouche, main, cheveux, photo-réaliste, bordure, cadre, marge";
 
     const payloadImage = { 
@@ -70,7 +70,6 @@ export default async function (req, res) {
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
-    // On revient à l'ancienne réponse simple
     res.status(200).json({ imageUrl });
 
   } catch (error) {
