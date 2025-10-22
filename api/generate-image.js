@@ -15,10 +15,7 @@ export default async function (req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // ======================================================================
-    // === PHASE 1.A : L'IA "ARCHITECTE" CRÉE LE PLAN (DESCRIPTION + PROMPT) ===
-    // ======================================================================
-    
+    // --- PHASE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
     const architectPrompt = `
       Tu es un directeur artistique et un poète symboliste. En te basant sur les informations suivantes :
       - Prénom: ${answers.name || 'Anonyme'}
@@ -33,8 +30,17 @@ export default async function (req, res) {
       Réponds UNIQUEMENT avec un objet JSON valide au format : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
     `;
 
-    const payloadArchitect = { contents: [{ role: "user", parts: [{ text: architectPrompt }] }] };
-    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}&generationConfig[response_mime_type]=application/json`;
+    // ======================================================================
+    // === LA CORRECTION EST ICI ===
+    // ======================================================================
+    const payloadArchitect = {
+      contents: [{ role: "user", parts: [{ text: architectPrompt }] }],
+      generationConfig: {
+        response_mime_type: "application/json",
+      }
+    };
+    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // ======================================================================
     
     const responseArchitect = await fetch(apiUrlArchitect, {
       method: 'POST',
@@ -43,36 +49,23 @@ export default async function (req, res) {
     });
 
     if (!responseArchitect.ok) {
+      const errorBody = await responseArchitect.text();
+      console.error("Erreur détaillée de l'API Gemini:", errorBody);
       throw new Error(`Erreur de l'API Gemini (Architecte): ${responseArchitect.statusText}`);
     }
 
     const resultArchitect = await responseArchitect.json();
-    // On parse le texte JSON retourné par l'IA
     const plan = JSON.parse(resultArchitect?.candidates?.[0]?.content?.parts?.[0]?.text);
 
     const { descriptionPourLeClient, promptPourImage } = plan;
 
-    // ======================================================================
-    // === PHASE 1.B : L'IA "ARTISTE" EXÉCUTE LE PLAN ===
-    // ======================================================================
-
-    const finalImagePrompt = `
-      ${promptPourImage}
-      L'œuvre doit remplir la totalité de l'image, sans aucune marge ou bordure (full bleed).
-      Le rendu doit être élégant, sophistiqué et de haute qualité.
-    `;
-
+    // --- PHASE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ---
+    const finalImagePrompt = `${promptPourImage}. L'œuvre doit remplir la totalité de l'image, sans aucune marge ou bordure (full bleed). Le rendu doit être élégant, sophistiqué et de haute qualité.`;
     const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, nez, bouche, main, cheveux, photo-réaliste, bordure, cadre, marge";
 
     const payloadImage = { 
-      instances: { 
-        prompt: finalImagePrompt,
-        negativePrompt: negativePromptText
-      }, 
-      parameters: { 
-        "sampleCount": 1,
-        "aspectRatio": "1:1"
-      } 
+      instances: { prompt: finalImagePrompt, negativePrompt: negativePromptText }, 
+      parameters: { "sampleCount": 1, "aspectRatio": "1:1" } 
     };
 
     const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
@@ -100,14 +93,11 @@ export default async function (req, res) {
       access: 'public',
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
-
-    // ======================================================================
-    // === PHASE 1.C : On renvoie les deux informations synchronisées ===
-    // ======================================================================
+    
     res.status(200).json({ imageUrl, imageDescription: descriptionPourLeClient });
 
   } catch (error) {
     console.error('Erreur de la Vercel Function (image) :', error);
-    res.status(500).json({ error: 'Une erreur est survenue sur le serveur lors de la génération de l\'image et de sa description.' });
+    res.status(500).json({ error: 'Une erreur est survenue sur le serveur.' });
   }
 }
