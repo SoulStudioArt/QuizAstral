@@ -15,51 +15,48 @@ export default async function (req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // ======================================================================
-    // === NOUVEAU PROMPT AJUSTÉ SELON VOTRE VISION ===
-    // ======================================================================
-
-    const imagePrompt = `
-      Générez une œuvre d'art numérique de haute qualité, de style purement abstrait et mystique.
-      Le thème est une interprétation cosmique et énergétique basée sur les informations de ${answers.name}.
-      La composition doit être centrée sur une géométrie astrale complexe, des nébuleuses colorées, des flux d'énergie lumineux et des symboles astraux.
-      L'œuvre peut subtilement incorporer le prénom '${answers.name}' ou la date '${answers.birthDate}', stylisés comme des constellations ou des motifs géométriques.
-      L'œuvre doit remplir la totalité de l'image, sans aucune marge ou bordure (full bleed).
-      Les couleurs doivent être vibrantes et profondes.
+    // --- ÉTAPE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
+    const architectPrompt = `
+      Tu es un directeur artistique et un poète symboliste. En te basant sur les informations suivantes :
+      - Prénom: ${answers.name || 'Anonyme'}
+      - Date de naissance: ${answers.birthDate || 'Inconnue'}
+      - Trait de personnalité: ${answers.personalityTrait || 'Mystérieux'}
+      - Plus grand rêve: ${answers.biggestDream || 'Explorer l\'inconnu'}
+      Ta mission est de produire deux choses distinctes sous forme d'objet JSON :
+      1.  descriptionPourLeClient: Une description poétique de 2-3 phrases qui explique les symboles visuels d'une œuvre d'art imaginaire.
+      2.  promptPourImage: Un prompt technique et visuel, en anglais, pour générer cette image, en te concentrant sur des motifs de géométrie astrale complexe, des nébuleuses et des symboles.
+      Réponds UNIQUEMENT avec un objet JSON valide au format : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
     `;
-
-    // Un prompt négatif plus ciblé, qui autorise le texte.
-    const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, nez, bouche, main, cheveux, photo-réaliste, bordure, cadre, marge";
-
-    const payloadImage = { 
-      instances: { 
-        prompt: imagePrompt,
-        negativePrompt: negativePromptText
-      }, 
-      parameters: { 
-        "sampleCount": 1,
-        "aspectRatio": "1:1"
-      } 
+    const payloadArchitect = {
+      contents: [{ role: "user", parts: [{ text: architectPrompt }] }],
+      generationConfig: { response_mime_type: "application/json" }
     };
-    
-    // ======================================================================
-
-    const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
-    const responseImage = await fetch(apiUrlImage, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payloadImage)
-    });
-
-    if (!responseImage.ok) {
-        return res.status(responseImage.status).json({ error: `Erreur de l'API Imagen: ${responseImage.statusText}` });
+    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
+    if (!responseArchitect.ok) {
+        const errorBody = await responseArchitect.text();
+        console.error("Erreur détaillée de l'API Gemini (Architecte):", errorBody);
+        throw new Error(`Erreur Gemini (Architecte): ${responseArchitect.statusText}`);
     }
+    const resultArchitect = await responseArchitect.json();
+    const plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
+    const { descriptionPourLeClient, promptPourImage } = plan;
 
+    // --- ÉTAPE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ---
+    const finalImagePrompt = `${promptPourImage}. Œuvre plein cadre, sans bordure (full bleed). Rendu élégant et sophistiqué.`;
+    const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, photo-réaliste, bordure, cadre, marge";
+    const payloadImage = {
+      instances: { prompt: finalImagePrompt, negativePrompt: negativePromptText },
+      parameters: { "sampleCount": 1, "aspectRatio": "1:1" }
+    };
+    const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+    const responseImage = await fetch(apiUrlImage, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadImage) });
+    if (!responseImage.ok) throw new Error(`Erreur Imagen: ${responseImage.statusText}`);
     const resultImage = await responseImage.json();
-    const base64Data = resultImage?.predictions?.[0]?.bytesBase64Encoded;
+    const base64Data = resultImage.predictions[0].bytesBase64Encoded;
 
     if (!base64Data) {
-      return res.status(500).json({ error: 'L\'API n\'a pas retourné de données d\'image valides.' });
+      throw new Error('L\'API n\'a pas retourné de données d\'image valides.');
     }
 
     const imageBuffer = Buffer.from(base64Data, 'base64');
@@ -70,10 +67,11 @@ export default async function (req, res) {
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
-    res.status(200).json({ imageUrl });
+    // --- ÉTAPE 3 : On renvoie les deux résultats ---
+    res.status(200).json({ imageUrl, imageDescription: descriptionPourLeClient });
 
   } catch (error) {
-    console.error('Erreur de la Vercel Function (image) :', error);
-    res.status(500).json({ error: 'Une erreur est survenue sur le serveur lors de la génération de l\'image.' });
+    console.error('Erreur dans /api/generate-image:', error);
+    res.status(500).json({ error: 'Une erreur est survenue sur le serveur.' });
   }
 }
