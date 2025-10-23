@@ -15,7 +15,7 @@ export default async function (req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // --- ÉTAPE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
+    // --- ÉTAPE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN (Logique du test) ---
     const architectPrompt = `
       Tu es un directeur artistique et un poète symboliste. En te basant sur les informations suivantes :
       - Prénom: ${answers.name || 'Anonyme'}
@@ -31,8 +31,8 @@ export default async function (req, res) {
       contents: [{ role: "user", parts: [{ text: architectPrompt }] }],
       generationConfig: { response_mime_type: "application/json" }
     };
-    // On utilise le nom de modèle qui a fonctionné dans nos tests
-    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
+    // On utilise le nom de modèle qui a fonctionné dans le test
+    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     if (!responseArchitect.ok) {
@@ -44,7 +44,7 @@ export default async function (req, res) {
     const plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
     const { descriptionPourLeClient, promptPourImage } = plan;
 
-    // --- ÉTAPE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ---
+    // --- ÉTAPE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN (Logique du test) ---
     const finalImagePrompt = `${promptPourImage}. Œuvre plein cadre, sans bordure (full bleed). Rendu élégant et sophistiqué.`;
     const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, photo-réaliste, bordure, cadre, marge";
     const payloadImage = {
