@@ -15,51 +15,42 @@ export default async function (req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // --- PHASE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
+    // --- ÉTAPE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
     const architectPrompt = `
       Tu es un directeur artistique et un poète symboliste. En te basant sur les informations suivantes :
       - Prénom: ${answers.name || 'Anonyme'}
       - Date de naissance: ${answers.birthDate || 'Inconnue'}
       - Trait de personnalité: ${answers.personalityTrait || 'Mystérieux'}
       - Plus grand rêve: ${answers.biggestDream || 'Explorer l\'inconnu'}
-
       Ta mission est de produire deux choses distinctes sous forme d'objet JSON :
       1.  descriptionPourLeClient: Une description poétique de 2-3 phrases qui explique les symboles visuels d'une œuvre d'art imaginaire.
-      2.  promptPourImage: Un prompt technique et visuel, en anglais, pour générer cette image.
+      2.  promptPourImage: Un prompt technique et visuel, en anglais, pour générer cette image, en te concentrant sur des motifs de géométrie astrale complexe, des nébuleuses et des symboles.
       Réponds UNIQUEMENT avec un objet JSON valide au format : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
     `;
-
     const payloadArchitect = {
       contents: [{ role: "user", parts: [{ text: architectPrompt }] }],
       generationConfig: { response_mime_type: "application/json" }
     };
-    
-    // ======================================================================
-    // === ON UTILISE LE NOM DE MODÈLE GEMINI QUI FONCTIONNE DÉJÀ POUR VOUS ===
-    // ======================================================================
-    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+    // On utilise le nom de modèle qui a fonctionné dans nos tests
+    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     if (!responseArchitect.ok) {
-      const errorBody = await responseArchitect.text();
-      console.error("Erreur détaillée de l'API Gemini:", errorBody);
-      throw new Error(`Erreur Gemini (Architecte): ${responseArchitect.statusText}`);
+        const errorBody = await responseArchitect.text();
+        console.error("Erreur détaillée de l'API Gemini (Architecte):", errorBody);
+        throw new Error(`Erreur Gemini (Architecte): ${responseArchitect.statusText}`);
     }
     const resultArchitect = await responseArchitect.json();
     const plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
     const { descriptionPourLeClient, promptPourImage } = plan;
 
-    // --- PHASE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ---
+    // --- ÉTAPE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ---
     const finalImagePrompt = `${promptPourImage}. Œuvre plein cadre, sans bordure (full bleed). Rendu élégant et sophistiqué.`;
     const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, photo-réaliste, bordure, cadre, marge";
     const payloadImage = {
       instances: { prompt: finalImagePrompt, negativePrompt: negativePromptText },
       parameters: { "sampleCount": 1, "aspectRatio": "1:1" }
     };
-
-    // ======================================================================
-    // === ON UTILISE LE NOM DE MODÈLE IMAGEN QUI FONCTIONNE DÉJÀ POUR VOUS ===
-    // ======================================================================
     const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
     
     const responseImage = await fetch(apiUrlImage, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadImage) });
@@ -80,6 +71,7 @@ export default async function (req, res) {
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
+    // --- ÉTAPE 3 : On renvoie les deux résultats ---
     res.status(200).json({ imageUrl, imageDescription: descriptionPourLeClient });
 
   } catch (error) {
