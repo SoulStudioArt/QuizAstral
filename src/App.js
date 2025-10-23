@@ -20,7 +20,8 @@ const Quiz = () => {
   const [quizLength, setQuizLength] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [result, setResult] = useState({ text: '', imageUrl: '' });
+  // MODIFICATION 1 : Le state `result` gère maintenant la description de l'image
+  const [result, setResult] = useState({ text: '', imageUrl: '', imageDescription: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false);
@@ -39,12 +40,7 @@ const Quiz = () => {
     if (!result.text) return { firstHalf: '', secondHalf: '' };
     const midpoint = Math.floor(result.text.length / 2);
     let splitPoint = result.text.lastIndexOf('.', midpoint);
-    if (splitPoint === -1) {
-      splitPoint = result.text.lastIndexOf(',', midpoint);
-    }
-    if (splitPoint === -1) {
-      splitPoint = midpoint;
-    }
+    if (splitPoint === -1) { splitPoint = midpoint; }
     const firstHalf = result.text.substring(0, splitPoint + 1);
     const secondHalf = result.text.substring(splitPoint + 1);
     return { firstHalf, secondHalf };
@@ -56,7 +52,6 @@ const Quiz = () => {
   };
 
   const handleNextQuestion = () => {
-    const maxQuestions = quizLength === 'short' ? 3 : 7;
     const currentQuestion = questions[currentQuestionIndex];
     if (currentQuestion.required && !answers[currentQuestion.id]) {
       setError('Ce champ est requis.');
@@ -78,40 +73,37 @@ const Quiz = () => {
       const dataToSend = { answers: answers };
 
       try {
-          const [textResponse, imageResponse] = await Promise.all([
+          const [textResponse, imageAndDescResponse] = await Promise.all([
             fetch('/api/generate-astral-result', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(dataToSend)
             }),
-            fetch('/api/generate-image', {
+            fetch('/api/generate-image', { // On appelle notre API mise à jour
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(dataToSend)
             })
           ]);
           
-          if (!textResponse.ok) {
-              const errorText = await textResponse.json();
-              throw new Error(errorText.error || `Erreur du serveur (texte): ${textResponse.statusText}`);
-          }
-          if (!imageResponse.ok) {
-              const errorImage = await imageResponse.json();
-              throw new Error(errorImage.error || `Erreur du serveur (image): ${imageResponse.statusText}`);
+          if (!textResponse.ok || !imageAndDescResponse.ok) {
+              throw new Error("Une erreur est survenue lors de la communication avec nos serveurs. Veuillez réessayer.");
           }
 
           const textData = await textResponse.json();
-          const imageData = await imageResponse.json();
+          // MODIFICATION 2 : On récupère l'image ET la description de l'image
+          const imageData = await imageAndDescResponse.json();
           
           setResult({
-              text: textData.text,
-              imageUrl: imageData.imageUrl
+              text: textData.text, // Le texte de la Révélation Céleste
+              imageUrl: imageData.imageUrl,
+              imageDescription: imageData.imageDescription // Le nouveau texte qui décrit l'image
           });
           setError('');
 
       } catch (e) {
           console.error("Erreur lors de l'appel des Vercel Functions :", e);
-          setError(e.message || "Désolé, une erreur est survenue lors de la génération de votre révélation. Veuillez réessayer.");
+          setError(e.message || "Désolé, une erreur est survenue. Veuillez réessayer.");
       } finally {
           setLoading(false);
           setStep(3);
@@ -126,7 +118,14 @@ const Quiz = () => {
     
     setIsDigitalUnlocked(true); 
 
-    const lienFinal = `${SHOPIFY_URL}/products/${SHOPIFY_PRODUCT_HANDLE}?image_url=${result.imageUrl}`;
+    // MODIFICATION 3 : On ajoute la nouvelle description à l'URL de redirection
+    const productUrl = `${SHOPIFY_URL}/products/${SHOPIFY_PRODUCT_HANDLE}`;
+    const params = new URLSearchParams({
+      image_url: result.imageUrl,
+      description: result.imageDescription
+    });
+    
+    const lienFinal = `${productUrl}?${params.toString()}`;
     window.top.location.href = lienFinal;
   };
 
@@ -229,16 +228,13 @@ const Quiz = () => {
         </div>
       );
     }
-
     if (step === 3) {
-      
       return (
         <div className="space-y-10 py-10">
           <h2 className="text-4xl font-bold text-center text-indigo-900">
             Votre Révélation Céleste, {answers.name || 'Cher Voyageur'}
           </h2>
           <div className="flex flex-col lg:flex-row gap-8 bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 mx-auto">
-            
             <div className="lg:w-2/3 space-y-6 text-left">
               <div className="space-y-4">
                 <h3 className="text-2xl font-bold text-indigo-900 mb-4">Votre Voyage Astral</h3>
@@ -255,10 +251,8 @@ const Quiz = () => {
                 )}
               </div>
             </div>
-            
             <div className="lg:w-1/3 space-y-6 text-center">
               <h3 className="text-2xl font-bold text-indigo-900">Votre Œuvre d'Art Unique</h3>
-              
               <div className="relative w-full aspect-[4/3] bg-gray-100 rounded-lg shadow-xl overflow-hidden border border-gray-300 mx-auto">
                 <img
                     src={result.imageUrl}
@@ -266,11 +260,9 @@ const Quiz = () => {
                     className="w-full h-full object-contain p-4"
                 />
               </div>
-
               <p className="text-gray-600 italic text-sm">
                 Cette œuvre d'art capture l'essence de votre profil astral.
               </p>
-              
               <button
                 onClick={handleProductAction}
                 disabled={!result.imageUrl}
