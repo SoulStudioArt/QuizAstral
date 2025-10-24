@@ -13,9 +13,13 @@ export default async function (req, res) {
       return res.status(400).json({ error: 'Données de quiz manquantes.' });
     }
 
+    // Affiche les données brutes reçues du quiz pour vérifier
+    console.log('--- DONNÉES REÇUES DU QUIZ ---');
+    console.log(answers);
+
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // --- ÉTAPE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN (Logique du test) ---
+    // --- ÉTAPE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
     const architectPrompt = `
       Tu es un directeur artistique et un poète symboliste. En te basant sur les informations suivantes :
       - Prénom: ${answers.name || 'Anonyme'}
@@ -31,7 +35,6 @@ export default async function (req, res) {
       contents: [{ role: "user", parts: [{ text: architectPrompt }] }],
       generationConfig: { response_mime_type: "application/json" }
     };
-    // On utilise le nom de modèle qui a fonctionné dans le test
     const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
@@ -41,10 +44,25 @@ export default async function (req, res) {
         throw new Error(`Erreur Gemini (Architecte): ${responseArchitect.statusText}`);
     }
     const resultArchitect = await responseArchitect.json();
-    const plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
+    
+    let plan;
+    try {
+        plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
+    } catch (e) {
+        console.error("Erreur de parsing JSON de la réponse de l'Architecte:", resultArchitect.candidates[0].content.parts[0].text);
+        throw new Error("L'API n'a pas retourné un plan JSON valide.");
+    }
+    
     const { descriptionPourLeClient, promptPourImage } = plan;
 
-    // --- ÉTAPE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN (Logique du test) ---
+    // =========================================================================
+    // === ESPION CRUCIAL : C'est la ligne qui nous donnera la réponse ! ===
+    // =========================================================================
+    console.log('--- PROMPT POUR IMAGE (SYSTÈME LIVE) ---');
+    console.log(promptPourImage);
+    // =========================================================================
+
+    // --- ÉTAPE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ---
     const finalImagePrompt = `${promptPourImage}. Œuvre plein cadre, sans bordure (full bleed). Rendu élégant et sophistiqué.`;
     const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, photo-réaliste, bordure, cadre, marge";
     const payloadImage = {
