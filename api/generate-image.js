@@ -21,14 +21,18 @@ export default async function (req, res) {
 
     // --- ÉTAPE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
     const architectPrompt = `
-      Tu es un directeur artistique et un poète symboliste. En te basant sur les informations suivantes :
+      Tu es un directeur artistique et un poète symboliste. En te basant STRICTEMENT sur les informations suivantes :
       - Prénom: ${answers.name || 'Anonyme'}
       - Date de naissance: ${answers.birthDate || 'Inconnue'}
       - Trait de personnalité: ${answers.personalityTrait || 'Mystérieux'}
       - Plus grand rêve: ${answers.biggestDream || 'Explorer l\'inconnu'}
+      
       Ta mission est de produire deux choses distinctes sous forme d'objet JSON :
-      1.  descriptionPourLeClient: Une description poétique de 2-3 phrases qui explique les symboles visuels d'une œuvre d'art imaginaire.
-      2.  promptPourImage: Un prompt technique et visuel, en anglais, pour générer cette image, en te concentrant sur des motifs de géométrie astrale complexe, des nébuleuses et des symboles.
+      
+      1.  descriptionPourLeClient: Une description poétique et HAUTEMENT PERSONNALISÉE de 2-3 phrases. Elle doit s'adresser directement à la personne (par exemple, "Pour ${answers.name}, ...") et incorporer son trait de personnalité et son plus grand rêve pour expliquer les symboles de l'œuvre.
+      
+      2.  promptPourImage: Un prompt technique et visuel, en anglais, pour générer cette image, en te concentrant sur des motifs de géométrie astrale complexe, des nébuleuses et des symboles inspirés par les informations de la personne.
+      
       Réponds UNIQUEMENT avec un objet JSON valide au format : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
     `;
     const payloadArchitect = {
