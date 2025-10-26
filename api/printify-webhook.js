@@ -25,7 +25,6 @@ export default async function (req, res) {
   }
   
   try {
-    // --- Section 2: Traitement de la commande ---
     const order = JSON.parse(rawBody.toString('utf8'));
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
@@ -35,56 +34,64 @@ export default async function (req, res) {
       return res.status(500).json({ error: 'Configuration Printify incomplète.' });
     }
 
-    const productItem = order.line_items.find(item => item.properties && item.properties.length > 0);
+    // ====================== MODIFICATION 1 : Utiliser .filter() ======================
+    // On récupère TOUS les articles personnalisés, pas seulement le premier.
+    const personalizedItems = order.line_items.filter(item => 
+        item.properties && item.properties.some(p => p.name === '_printify_variant_id')
+    );
 
-    if (!productItem) {
-      console.log('Commande sans items personnalisés. Aucune action requise.');
-      return res.status(200).json({ message: 'Aucun item personnalisé.' });
+    if (personalizedItems.length === 0) {
+      console.log('Commande sans items personnalisés Printify. Aucune action requise.');
+      return res.status(200).json({ message: 'Aucun item personnalisé Printify.' });
     }
 
-    // --- Section 3: Récupération dynamique des données depuis les propriétés de la commande ---
-    const customImageProperty = productItem.properties.find(prop => prop.name === 'Image Personnalisée');
-    const variantProperty = productItem.properties.find(prop => prop.name === '_printify_variant_id');
-    const blueprintProperty = productItem.properties.find(p => p.name === '_printify_blueprint_id');
-    const providerProperty = productItem.properties.find(p => p.name === '_printify_provider_id');
+    // ====================== MODIFICATION 2 : Construire une liste d'articles ======================
+    // On utilise .map() pour transformer chaque article Shopify en un article au format Printify.
+    const printifyLineItems = personalizedItems.map(item => {
+      // On cherche les propriétés spécifiques à CET article.
+      const customImageProperty = item.properties.find(prop => prop.name.startsWith('Image Personnalisée'));
+      const variantProperty = item.properties.find(prop => prop.name === '_printify_variant_id');
+      const blueprintProperty = item.properties.find(p => p.name === '_printify_blueprint_id');
+      const providerProperty = item.properties.find(p => p.name === '_printify_provider_id');
 
-    const imageUrl = customImageProperty ? customImageProperty.value : null;
-    const printifyVariantId = variantProperty ? parseInt(variantProperty.value, 10) : null;
-    const printifyBlueprintId = blueprintProperty ? parseInt(blueprintProperty.value, 10) : null;
-    const printifyPrintProviderId = providerProperty ? parseInt(providerProperty.value, 10) : null;
+      // Si une des propriétés manque pour cet article, on retourne null pour le filtrer plus tard.
+      if (!customImageProperty || !variantProperty || !blueprintProperty || !providerProperty) {
+        console.error('Données de personnalisation manquantes pour un article:', item.sku);
+        return null;
+      }
+      
+      const imageUrl = customImageProperty.value;
+      const printifyVariantId = parseInt(variantProperty.value, 10);
+      const printifyBlueprintId = parseInt(blueprintProperty.value, 10);
+      const printifyPrintProviderId = parseInt(providerProperty.value, 10);
 
-    if (!imageUrl || !printifyVariantId || !printifyBlueprintId || !printifyPrintProviderId) {
-      console.error('Données de personnalisation manquantes dans la commande:', order.order_number, {
-        imageUrl: !!imageUrl,
-        variantId: printifyVariantId,
-        blueprintId: printifyBlueprintId,
-        providerId: printifyPrintProviderId,
-      });
-      return res.status(400).json({ error: 'Données de commande Printify manquantes.' });
+      // On retourne l'objet au format attendu par l'API Printify.
+      return {
+        variant_id: printifyVariantId,
+        blueprint_id: printifyBlueprintId, 
+        print_provider_id: printifyPrintProviderId,
+        quantity: item.quantity,
+        print_areas: {
+          "front": [
+            { "src": imageUrl, "x": 0.5, "y": 0.5, "scale": 1, "angle": 0 }
+          ]
+        },
+        "print_details": {
+          "print_on_side": "mirror"
+        }
+      };
+    }).filter(Boolean); // .filter(Boolean) retire tous les 'null' de la liste.
+
+    // Si après le mapping, aucun article n'est valide, on s'arrête.
+    if (printifyLineItems.length === 0) {
+        console.error('Aucun article valide à envoyer à Printify pour la commande:', order.order_number);
+        return res.status(400).json({ error: 'Aucun article valide à envoyer à Printify.' });
     }
-    
+
     // --- Section 4: Construction et envoi de la commande à Printify ---
     const printifyPayload = {
       external_id: `shopify-order-${order.id}`,
-      line_items: [
-        {
-          variant_id: printifyVariantId,
-          blueprint_id: printifyBlueprintId, 
-          print_provider_id: printifyPrintProviderId,
-          quantity: productItem.quantity,
-          print_areas: {
-            "front": [
-              { "src": imageUrl, "x": 0.5, "y": 0.5, "scale": 1, "angle": 0 }
-            ]
-          },
-          // =====================================================================
-          // === LA CORRECTION EST ICI : On utilise "mirror", qui est autorisé ===
-          // =====================================================================
-          "print_details": {
-            "print_on_side": "mirror"
-          }
-        }
-      ],
+      line_items: printifyLineItems, // <-- On utilise notre nouvelle liste d'articles
       shipping_method: 1,
       send_shipping_notification: true,
       address_to: {
