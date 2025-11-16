@@ -72,7 +72,7 @@ export default async function (req, res) {
       instances: { prompt: finalImagePrompt, negativePrompt: negativePromptText },
       parameters: { "sampleCount": 1, "aspectRatio": "1:1" }
     };
-    const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+    const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.2-generate-002:predict?key=${apiKey}`;
     
     const responseImage = await fetch(apiUrlImage, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadImage) });
     
