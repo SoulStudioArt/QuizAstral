@@ -17,9 +17,11 @@ export default async function (req, res) {
     console.log(answers);
 
     const apiKey = process.env.GEMINI_API_KEY;
+    const projectId = 'soulstudio-art'; // Votre ID de projet Google Cloud
+    const region = 'us-central1'; // Région standard pour Vertex AI
 
     // --- ÉTAPE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
-    // (Ceci fonctionne maintenant avec "gemini-2.5-flash")
+    // (Ceci fonctionne. On n'y touche plus)
     const architectPrompt = `
       Tu es un directeur artistique et un poète symboliste. En te basant STRICTEMENT sur les informations suivantes :
       - Prénom: ${answers.name || 'Anonyme'}
@@ -66,14 +68,25 @@ export default async function (req, res) {
     // --- ÉTAPE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ---
     const finalImagePrompt = `${promptPourImage}. Œuvre plein cadre, sans bordure (full bleed). Rendu élégant et sophistiqué.`;
     const negativePromptText = "visage, portrait, figure humaine, personne, silhouette, corps, yeux, photo-réaliste, bordure, cadre, marge";
+
+    // ================== CORRECTION DE L'ENDPOINT ICI ==================
+    // On change l'URL pour pointer vers l'API Vertex AI, qui est la bonne.
+    const apiUrlImage = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/imagen-3.2-generate-005:predict?key=${apiKey}`;
+
+    // On ajuste le payload pour le format de Vertex AI (notez les [ ... ] autour de l'instance)
     const payloadImage = {
-      instances: { prompt: finalImagePrompt, negativePrompt: negativePromptText },
-      parameters: { "sampleCount": 1, "aspectRatio": "1:1" }
+      "instances": [
+        { 
+          "prompt": finalImagePrompt,
+          "negativePrompt": negativePromptText 
+        }
+      ],
+      "parameters": {
+        "sampleCount": 1,
+        "aspectRatio": "1:1"
+      }
     };
-    
-    // ================== CORRECTION FINALE ICI ==================
-    // Remplacement de "3.2-generate-002" par le modèle stable le plus récent "3.2-generate-005"
-    const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.2-generate-005:predict?key=${apiKey}`;
+    // ================================================================
     
     const responseImage = await fetch(apiUrlImage, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadImage) });
     
