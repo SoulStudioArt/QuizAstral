@@ -13,13 +13,13 @@ export default async function (req, res) {
       return res.status(400).json({ error: 'Données de quiz manquantes.' });
     }
 
-    // Affiche les données brutes reçues du quiz pour vérifier
     console.log('--- DONNÉES REÇUES DU QUIZ ---');
     console.log(answers);
 
     const apiKey = process.env.GEMINI_API_KEY;
 
     // --- ÉTAPE 1 : L'IA "ARCHITECTE" CRÉE LE PLAN ---
+    // (Ceci fonctionne maintenant avec "gemini-2.5-flash")
     const architectPrompt = `
       Tu es un directeur artistique et un poète symboliste. En te basant STRICTEMENT sur les informations suivantes :
       - Prénom: ${answers.name || 'Anonyme'}
@@ -40,8 +40,6 @@ export default async function (req, res) {
       generationConfig: { response_mime_type: "application/json" }
     };
     
-    // ================== CORRECTION ICI ==================
-    // Remplacement de l'ancien modèle "preview-05-20" par le modèle stable "gemini-2.5-flash"
     const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
@@ -72,12 +70,14 @@ export default async function (req, res) {
       instances: { prompt: finalImagePrompt, negativePrompt: negativePromptText },
       parameters: { "sampleCount": 1, "aspectRatio": "1:1" }
     };
-    const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.2-generate-002:predict?key=${apiKey}`;
+    
+    // ================== CORRECTION FINALE ICI ==================
+    // Remplacement de "3.2-generate-002" par le modèle stable le plus récent "3.2-generate-005"
+    const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.2-generate-005:predict?key=${apiKey}`;
     
     const responseImage = await fetch(apiUrlImage, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadImage) });
     
     if (!responseImage.ok) {
-        // Ajout d'une journalisation d'erreur plus détaillée
         const errorBody = await responseImage.text();
         console.error("Erreur détaillée de l'API Imagen (Artiste):", errorBody);
         throw new Error(`Erreur Imagen (Artiste): ${responseImage.statusText}`);
@@ -98,7 +98,6 @@ export default async function (req, res) {
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
-    // --- ÉTAPE 3 : On renvoie les deux résultats ---
     res.status(200).json({ imageUrl, imageDescription: descriptionPourLeClient });
 
   } catch (error) {
