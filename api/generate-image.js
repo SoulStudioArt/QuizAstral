@@ -39,7 +39,10 @@ export default async function (req, res) {
       contents: [{ role: "user", parts: [{ text: architectPrompt }] }],
       generationConfig: { response_mime_type: "application/json" }
     };
-    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+    
+    // ================== CORRECTION ICI ==================
+    // Remplacement de l'ancien modèle "preview-05-20" par le modèle stable "gemini-2.5-flash"
+    const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     if (!responseArchitect.ok) {
@@ -59,12 +62,8 @@ export default async function (req, res) {
     
     const { descriptionPourLeClient, promptPourImage } = plan;
 
-    // =========================================================================
-    // === ESPION CRUCIAL : C'est la ligne qui nous donnera la réponse ! ===
-    // =========================================================================
     console.log('--- PROMPT POUR IMAGE (SYSTÈME LIVE) ---');
     console.log(promptPourImage);
-    // =========================================================================
 
     // --- ÉTAPE 2 : L'IA "ARTISTE" EXÉCUTE LE PLAN ---
     const finalImagePrompt = `${promptPourImage}. Œuvre plein cadre, sans bordure (full bleed). Rendu élégant et sophistiqué.`;
@@ -76,7 +75,13 @@ export default async function (req, res) {
     const apiUrlImage = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
     
     const responseImage = await fetch(apiUrlImage, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadImage) });
-    if (!responseImage.ok) throw new Error(`Erreur Imagen (Artiste): ${responseImage.statusText}`);
+    
+    if (!responseImage.ok) {
+        // Ajout d'une journalisation d'erreur plus détaillée
+        const errorBody = await responseImage.text();
+        console.error("Erreur détaillée de l'API Imagen (Artiste):", errorBody);
+        throw new Error(`Erreur Imagen (Artiste): ${responseImage.statusText}`);
+    }
     
     const resultImage = await responseImage.json();
     const base64Data = resultImage.predictions[0].bytesBase64Encoded;
