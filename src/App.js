@@ -23,7 +23,6 @@ const Quiz = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false);
-  // NOUVEAU STATE : Pour gérer le Zoom sur l'image
   const [isZoomed, setIsZoomed] = useState(false);
   
   useEffect(() => {
@@ -250,16 +249,16 @@ const Quiz = () => {
       );
     }
     
-    // --- ÉTAPE 3 : RÉSULTAT (DESIGN REFAIT) ---
+    // --- ÉTAPE 3 : RÉSULTAT (DESIGN MIS À JOUR) ---
     if (step === 3) {
       return (
         <div className="space-y-12 py-6">
-          {/* Titre Principal */}
+          {/* NOUVEAU TITRE PLUS CONCRET */}
           <h2 className="text-3xl md:text-4xl font-bold text-center text-indigo-900">
-            Votre Révélation Céleste, {answers.name || 'Cher Voyageur'}
+            Votre Œuvre d'Art Astrale, {answers.name || 'Cher Voyageur'}
           </h2>
 
-          {/* SECTION 1 : LE VISUEL (HERO) - Image à gauche, Actions à droite */}
+          {/* SECTION 1 : LE VISUEL (HERO) */}
           <div className="flex flex-col lg:flex-row gap-10 items-start">
             
             {/* L'IMAGE (En vedette) */}
@@ -270,21 +269,28 @@ const Quiz = () => {
                     alt="Design personnalisé"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                {/* Indication de Zoom */}
                 <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity">
                   🔍 Agrandir
                 </div>
               </div>
             </div>
 
-            {/* LE BOUTON D'ACTION (À côté de l'image) */}
-            <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-6 lg:pt-10">
-              <h3 className="text-2xl font-bold text-indigo-900">Votre Œuvre Unique</h3>
+            {/* LE BOUTON D'ACTION + DESCRIPTION DE L'IMAGE */}
+            <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-6 lg:pt-4">
+              <h3 className="text-2xl font-bold text-indigo-900">L'Essence de votre Design</h3>
+              
+              {/* Texte d'intro */}
               <p className="text-gray-600 text-lg leading-relaxed">
                 Cette image a été générée exclusivement pour vous, basée sur votre énergie et vos rêves. Elle n'existe nulle part ailleurs dans l'univers.
               </p>
+
+              {/* --- AJOUT : LA DESCRIPTION SPÉCIFIQUE DE L'IMAGE --- */}
+              <div className="p-5 bg-white rounded-lg border-l-4 border-indigo-400 shadow-sm italic text-gray-700 leading-relaxed">
+                <p>"{result.imageDescription}"</p>
+              </div>
               
-              <div className="p-6 bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm">
+              {/* Bloc d'appel à l'action */}
+              <div className="p-6 bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm mt-4">
                 <p className="text-indigo-800 font-semibold mb-4">
                   Transformez cette vision en réalité. Imprimez votre âme sur une toile de qualité musée.
                 </p>
@@ -301,9 +307,9 @@ const Quiz = () => {
 
           <hr className="border-gray-200" />
 
-          {/* SECTION 2 : LE TEXTE (LA RÉVÉLATION) */}
+          {/* SECTION 2 : LE TEXTE (LA RÉVÉLATION COMPLÈTE) */}
           <div className="bg-white p-8 md:p-10 rounded-2xl shadow-lg border border-gray-100 mx-auto max-w-4xl">
-            <h3 className="text-2xl font-bold text-indigo-900 mb-6 text-center">L'Interprétation des Astres</h3>
+            <h3 className="text-2xl font-bold text-indigo-900 mb-6 text-center">Votre Révélation Céleste</h3>
             <div className="space-y-4 text-lg text-gray-700 leading-relaxed text-justify">
                 <p className="whitespace-pre-wrap">{splitText.firstHalf}</p>
                 <p className="whitespace-pre-wrap">{splitText.secondHalf}</p>
@@ -324,7 +330,6 @@ const Quiz = () => {
              </div>
           </div>
 
-          {/* Le Modal de Zoom */}
           <ZoomModal />
         </div>
       );
