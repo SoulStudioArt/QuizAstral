@@ -284,9 +284,9 @@ const Quiz = () => {
                 Cette image a été générée exclusivement pour vous, basée sur votre énergie et vos rêves. Elle n'existe nulle part ailleurs dans l'univers.
               </p>
 
-              {/* --- AJOUT : LA DESCRIPTION SPÉCIFIQUE DE L'IMAGE --- */}
-              <div className="p-5 bg-white rounded-lg border-l-4 border-indigo-400 shadow-sm italic text-gray-700 leading-relaxed">
-                <p>"{result.imageDescription}"</p>
+              {/* --- MODIFICATION ICI : TEXTE PLUS GRAND --- */}
+              <div className="p-6 bg-white rounded-lg border-l-4 border-indigo-400 shadow-sm italic text-indigo-900 leading-relaxed">
+                <p className="text-xl font-medium">"{result.imageDescription}"</p>
               </div>
               
               {/* Bloc d'appel à l'action */}
