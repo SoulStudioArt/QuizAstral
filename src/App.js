@@ -14,18 +14,17 @@ const questions = [
 const SHOPIFY_PRODUCT_HANDLE = 'mystical-eye-mandala-canvas-art-home-decor-spiritual-wall-art-meditation-decor-gift-for-mindfulness-boho-art-piece';
 const SHOPIFY_URL = 'https://soulstudioart.com';
 
-
 const Quiz = () => {
   const [step, setStep] = useState(0);
   const [quizLength, setQuizLength] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  // MODIFICATION 1 : Le state `result` gère maintenant la description de l'image
   const [result, setResult] = useState({ text: '', imageUrl: '', imageDescription: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDigitalUnlocked, setIsDigitalUnlocked] = useState(false);
-  
+  // NOUVEAU STATE : Pour gérer le Zoom sur l'image
+  const [isZoomed, setIsZoomed] = useState(false);
   
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -79,7 +78,7 @@ const Quiz = () => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(dataToSend)
             }),
-            fetch('/api/generate-image', { // On appelle notre API mise à jour
+            fetch('/api/generate-image', { 
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(dataToSend)
@@ -91,13 +90,12 @@ const Quiz = () => {
           }
 
           const textData = await textResponse.json();
-          // MODIFICATION 2 : On récupère l'image ET la description de l'image
           const imageData = await imageAndDescResponse.json();
           
           setResult({
-              text: textData.text, // Le texte de la Révélation Céleste
+              text: textData.text, 
               imageUrl: imageData.imageUrl,
-              imageDescription: imageData.imageDescription // Le nouveau texte qui décrit l'image
+              imageDescription: imageData.imageDescription 
           });
           setError('');
 
@@ -118,7 +116,6 @@ const Quiz = () => {
     
     setIsDigitalUnlocked(true); 
 
-    // MODIFICATION 3 : On ajoute la nouvelle description à l'URL de redirection
     const productUrl = `${SHOPIFY_URL}/products/${SHOPIFY_PRODUCT_HANDLE}`;
     const params = new URLSearchParams({
       image_url: result.imageUrl,
@@ -127,6 +124,30 @@ const Quiz = () => {
     
     const lienFinal = `${productUrl}?${params.toString()}`;
     window.top.location.href = lienFinal;
+  };
+
+  // --- COMPOSANT ZOOM (LIGHTBOX) ---
+  const ZoomModal = () => {
+    if (!isZoomed) return null;
+    return (
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-95 p-4 cursor-zoom-out"
+        onClick={() => setIsZoomed(false)}
+      >
+        <img 
+          src={result.imageUrl} 
+          alt="Zoom Art" 
+          className="max-h-full max-w-full object-contain shadow-2xl rounded-md"
+        />
+        <button 
+          className="absolute top-5 right-5 text-white text-4xl font-bold focus:outline-none"
+          onClick={() => setIsZoomed(false)}
+        >
+          &times;
+        </button>
+        <p className="absolute bottom-5 text-white text-sm opacity-70">Cliquez n'importe où pour fermer</p>
+      </div>
+    );
   };
 
   const renderContent = () => {
@@ -224,62 +245,95 @@ const Quiz = () => {
         <div className="flex flex-col items-center justify-center p-12 space-y-6 text-center">
           <div className="spinner"></div> 
           <h2 className="text-2xl font-bold text-indigo-900">Création de votre Révélation Céleste...</h2>
-          <p className="text-gray-600 text-lg">Votre rapport et votre œuvre d'art sont en cours de création. Cela peut prendre quelques instants.</p>
+          <p className="text-gray-600 text-lg">L'architecte dessine les plans, l'artiste prépare ses pinceaux...<br/>Votre œuvre unique arrive.</p>
         </div>
       );
     }
+    
+    // --- ÉTAPE 3 : RÉSULTAT (DESIGN REFAIT) ---
     if (step === 3) {
       return (
-        <div className="space-y-10 py-10">
-          <h2 className="text-4xl font-bold text-center text-indigo-900">
+        <div className="space-y-12 py-6">
+          {/* Titre Principal */}
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-indigo-900">
             Votre Révélation Céleste, {answers.name || 'Cher Voyageur'}
           </h2>
-          <div className="flex flex-col lg:flex-row gap-8 bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 mx-auto">
-            <div className="lg:w-2/3 space-y-6 text-left">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold text-indigo-900 mb-4">Votre Voyage Astral</h3>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.firstHalf}</p>
-                {!isDigitalUnlocked && splitText.secondHalf && (
-                  <div className="mt-6 p-6 bg-indigo-50 border-l-4 border-indigo-500 rounded-lg shadow-md">
-                    <p className="text-indigo-800 font-semibold">
-                      Débloquez la suite de votre voyage astral et choisissez votre produit en cliquant sur le bouton ci-contre.
-                    </p>
-                  </div>
-                )}
-                {isDigitalUnlocked && (
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{splitText.secondHalf}</p>
-                )}
-              </div>
-            </div>
-            <div className="lg:w-1/3 space-y-6 text-center">
-              <h3 className="text-2xl font-bold text-indigo-900">Votre Œuvre d'Art Unique</h3>
-              <div className="relative w-full aspect-[4/3] bg-gray-100 rounded-lg shadow-xl overflow-hidden border border-gray-300 mx-auto">
-                <img
+
+          {/* SECTION 1 : LE VISUEL (HERO) - Image à gauche, Actions à droite */}
+          <div className="flex flex-col lg:flex-row gap-10 items-start">
+            
+            {/* L'IMAGE (En vedette) */}
+            <div className="w-full lg:w-1/2 relative group cursor-zoom-in" onClick={() => setIsZoomed(true)}>
+              <div className="aspect-square bg-gray-100 rounded-xl shadow-2xl overflow-hidden border-4 border-indigo-50 relative">
+                 <img
                     src={result.imageUrl}
                     alt="Design personnalisé"
-                    className="w-full h-full object-contain p-4"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
+                {/* Indication de Zoom */}
+                <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                  🔍 Agrandir
+                </div>
               </div>
-              <p className="text-gray-600 italic text-sm">
-                Cette œuvre d'art capture l'essence de votre profil astral.
+            </div>
+
+            {/* LE BOUTON D'ACTION (À côté de l'image) */}
+            <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-6 lg:pt-10">
+              <h3 className="text-2xl font-bold text-indigo-900">Votre Œuvre Unique</h3>
+              <p className="text-gray-600 text-lg leading-relaxed">
+                Cette image a été générée exclusivement pour vous, basée sur votre énergie et vos rêves. Elle n'existe nulle part ailleurs dans l'univers.
               </p>
-              <button
-                onClick={handleProductAction}
-                disabled={!result.imageUrl}
-                className={`w-full py-4 bg-indigo-600 text-white text-xl font-bold rounded-lg shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 ${!result.imageUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                Créer mon Produit Personnalisé
-              </button>
+              
+              <div className="p-6 bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm">
+                <p className="text-indigo-800 font-semibold mb-4">
+                  Transformez cette vision en réalité. Imprimez votre âme sur une toile de qualité musée.
+                </p>
+                <button
+                  onClick={handleProductAction}
+                  disabled={!result.imageUrl}
+                  className={`w-full py-4 bg-indigo-600 text-white text-xl font-bold rounded-lg shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/50 ${!result.imageUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  Créer mon Produit Personnalisé →
+                </button>
+              </div>
             </div>
           </div>
+
+          <hr className="border-gray-200" />
+
+          {/* SECTION 2 : LE TEXTE (LA RÉVÉLATION) */}
+          <div className="bg-white p-8 md:p-10 rounded-2xl shadow-lg border border-gray-100 mx-auto max-w-4xl">
+            <h3 className="text-2xl font-bold text-indigo-900 mb-6 text-center">L'Interprétation des Astres</h3>
+            <div className="space-y-4 text-lg text-gray-700 leading-relaxed text-justify">
+                <p className="whitespace-pre-wrap">{splitText.firstHalf}</p>
+                <p className="whitespace-pre-wrap">{splitText.secondHalf}</p>
+            </div>
+          </div>
+
+          {/* SECTION 3 : LE RAPPEL (FOOTER) */}
+          <div className="flex flex-col items-center space-y-6 pt-8 pb-4">
+             <p className="text-gray-500 italic">Vous aimez ce que vous voyez ?</p>
+             <div className="flex flex-col md:flex-row gap-6 items-center">
+                <img src={result.imageUrl} alt="Miniature" className="w-24 h-24 rounded-lg shadow-md object-cover border-2 border-indigo-200" />
+                <button
+                  onClick={handleProductAction}
+                  className="bg-indigo-900 text-white px-10 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-black transition-all duration-300 transform hover:scale-105"
+                >
+                  Commander ma Toile Maintenant
+                </button>
+             </div>
+          </div>
+
+          {/* Le Modal de Zoom */}
+          <ZoomModal />
         </div>
       );
     }
   };
 
   return (
-    <div className="font-sans p-4 w-full">
-      <div className="w-full max-w-6xl p-8 md:p-12 bg-white rounded-3xl shadow-2xl border border-gray-200 mx-auto">
+    <div className="font-sans p-4 w-full min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="w-full max-w-6xl p-6 md:p-12 bg-white rounded-3xl shadow-2xl border border-gray-200 mx-auto my-8">
         {renderContent()}
       </div>
     </div>
@@ -288,7 +342,7 @@ const Quiz = () => {
 
 export default function App() {
   return (
-    <div className="bg-gray-50 p-4 w-full">
+    <div className="bg-gray-50 w-full min-h-screen">
       <Quiz />
     </div>
   );
