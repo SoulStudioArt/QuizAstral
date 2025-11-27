@@ -57,19 +57,21 @@ case 'psyche':
             productTitle = "🍄 Voyage Intérieur (Psychédélique)";
             simulatedData = {
                 name: "Alex",
-                dream: "Rêve lucide et contrôle",
-                geometry: "Spirale Infinie (Fibonacci)",
-                colors: "Néon électrique sur fond noir"
+                dream: "Expansion de conscience",
+                geometry: "Spirale Organique",
+                colors: "Vert Émeraude et Violet Néon"
             };
             architectPrompt = `
               Tu es un artiste visionnaire (style Alex Grey ou Android Jones).
               Profil : ${JSON.stringify(simulatedData)}.
-              Mission : Créer une représentation visuelle de sa conscience expandue.
+              Mission : Créer une représentation visuelle de sa conscience expandue, très organique.
               JSON attendu :
-              1. "descriptionPourLeClient" : Texte mystique sur l'ouverture du troisième œil et la géométrie de son esprit.
+              1. "descriptionPourLeClient" : Texte mystique sur la connexion avec la nature sacrée et les dimensions cachées.
               2. "promptPourImage" : Prompt ANGLAIS pour art psychédélique haute définition.
-                 - Mots-clés : Infinite fractals, bioluminescence, kaleidoscope, sacred geometry, DMT style, neon colors against deep black, hyper-detailed.
-                 - AUCUN VISAGE RÉALISTE, focus sur la structure mentale.
+                 - Mots-clés OBLIGATOIRES : Infinite fractals, bioluminescence, kaleidoscope, sacred geometry.
+                 - AJOUTS ORGANIQUES : Intégrer subtilement des "stylized sativa leaf patterns" (feuilles dentelées) et des "glowing fungal shapes" (formes de champignons lumineux) dans la géométrie sacrée.
+                 - Ambiance : Neon colors against deep black, hyper-detailed, mycelium network connections, organic mysticism, 8k.
+                 - SÉCURITÉ : Ne pas représenter de consommation, rester dans l'art abstrait/botanique.
             `;
             break;
         case 'egypt':
