@@ -53,7 +53,25 @@ export default async function (req, res) {
               JSON : { "descriptionPourLeClient": "Interprétation de la carte...", "promptPourImage": "Prompt ANGLAIS style Art Nouveau (Mucha), mystical tarot card, golden borders, 8k." }
             `;
             break;
-
+case 'psyche':
+            productTitle = "🍄 Voyage Intérieur (Psychédélique)";
+            simulatedData = {
+                name: "Alex",
+                dream: "Rêve lucide et contrôle",
+                geometry: "Spirale Infinie (Fibonacci)",
+                colors: "Néon électrique sur fond noir"
+            };
+            architectPrompt = `
+              Tu es un artiste visionnaire (style Alex Grey ou Android Jones).
+              Profil : ${JSON.stringify(simulatedData)}.
+              Mission : Créer une représentation visuelle de sa conscience expandue.
+              JSON attendu :
+              1. "descriptionPourLeClient" : Texte mystique sur l'ouverture du troisième œil et la géométrie de son esprit.
+              2. "promptPourImage" : Prompt ANGLAIS pour art psychédélique haute définition.
+                 - Mots-clés : Infinite fractals, bioluminescence, kaleidoscope, sacred geometry, DMT style, neon colors against deep black, hyper-detailed.
+                 - AUCUN VISAGE RÉALISTE, focus sur la structure mentale.
+            `;
+            break;
         case 'egypt':
         default:
             productTitle = "☥ Héritage Égyptien";
