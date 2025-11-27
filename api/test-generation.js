@@ -59,19 +59,22 @@ case 'psyche':
                 name: "Alex",
                 dream: "Expansion de conscience",
                 geometry: "Spirale Organique",
-                colors: "Vert Émeraude et Violet Néon"
+                colors: "Vert Émeraude, Violet et Or"
             };
             architectPrompt = `
-              Tu es un artiste visionnaire (style Alex Grey ou Android Jones).
+              Tu es un artiste visionnaire (style Alex Grey, Android Jones ou Roger Dean).
               Profil : ${JSON.stringify(simulatedData)}.
-              Mission : Créer une représentation visuelle de sa conscience expandue, très organique.
+              Mission : Créer une représentation visuelle de sa conscience expandue, très organique et vivante.
               JSON attendu :
-              1. "descriptionPourLeClient" : Texte mystique sur la connexion avec la nature sacrée et les dimensions cachées.
+              1. "descriptionPourLeClient" : Texte mystique sur la connexion avec la nature sacrée, le mycélium universel et les dimensions cachées.
               2. "promptPourImage" : Prompt ANGLAIS pour art psychédélique haute définition.
-                 - Mots-clés OBLIGATOIRES : Infinite fractals, bioluminescence, kaleidoscope, sacred geometry.
-                 - AJOUTS ORGANIQUES : Intégrer subtilement des "stylized sativa leaf patterns" (feuilles dentelées) et des "glowing fungal shapes" (formes de champignons lumineux) dans la géométrie sacrée.
-                 - Ambiance : Neon colors against deep black, hyper-detailed, mycelium network connections, organic mysticism, 8k.
-                 - SÉCURITÉ : Ne pas représenter de consommation, rester dans l'art abstrait/botanique.
+                 - STYLE : Visionary art, DMT aesthetic, Hyper-realistic textures mixed with fractals.
+                 - ÉLÉMENTS CLÉS (VRAIES FORMES) : 
+                   1. "Giant glowing fantasy mushrooms" (Champignons géants lumineux) avec des détails réalistes sur les lamelles et les chapeaux.
+                   2. "Amanita Muscaria patterns" (Motifs d'amanites rouges à points blancs) intégrés dans la spirale.
+                   3. "Stylized Cannabis Sativa leaves" (Feuilles de Sativa stylisées) formant des mandalas sacrés.
+                 - AMBIANCE : Neon colors against deep black void, bioluminescent mycelium networks connecting everything, 8k resolution, octane render.
+                 - SÉCURITÉ : Pas d'humains, pas de consommation. Juste la nature magique et la géométrie.
             `;
             break;
         case 'egypt':
