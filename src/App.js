@@ -154,7 +154,7 @@ const Quiz = () => {
       return (
         <div className="text-center space-y-10 py-12">
           <h2 className="text-4xl md:text-5xl font-bold text-indigo-900">
-            Bienvenue dans l'univers de Soul Studio Art
+            Bienvenue dans l'univers de Soul Studio Art 🌟
           </h2>
           <p className="text-gray-700 text-lg max-w-3xl mx-auto">
             Préparez-vous à découvrir votre "Révélation Céleste" personnalisée, accompagnée d'une œuvre d'art unique.
