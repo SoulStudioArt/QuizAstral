@@ -3,7 +3,7 @@ import { GoogleAuth } from 'google-auth-library';
 
 export default async function (req, res) {
   try {
-    // On choisit le type de test via l'URL (ex: ?type=animal). Par défaut : 'egypt'
+    // On choisit le type de test via l'URL. Par défaut : 'egypt'
     const type = req.query.type || 'egypt';
     
     // --- Infos Google Cloud ---
@@ -16,82 +16,82 @@ export default async function (req, res) {
     let simulatedData = {};
     let productTitle = '';
 
-    // === CONFIGURATION DES 4 SCÉNARIOS ===
+    // === CONFIGURATION DES SCÉNARIOS ===
     switch (type) {
+        // --- NOUVEAUX : IMAGES GÉNÉRIQUES DE LUXE (POUR SHOPIFY) ---
+        case 'luxury_heart':
+            productTitle = "💎 Luxe - Cœur Énergétique";
+            architectPrompt = `
+              Tu es un expert en design d'intérieur de luxe.
+              Mission : Générer le JSON pour une image de placeholder haut de gamme.
+              JSON OBLIGATOIRE :
+              { 
+                "descriptionPourLeClient": "Image générique représentant l'énergie pure, utilisée pour le checkout.", 
+                "promptPourImage": "A luxurious interior design photograph showing a square framed canvas art print hanging on a minimalist light-colored wall in an elegant modern living room. The artwork displayed on the canvas is a mystical, abstract representation of pure energy: a glowing central sphere of swirling golden and blue light particles against a deep, dark indigo night sky background. It looks like a portal of concentrated magic. Cinematic lighting focuses on the artwork, casting soft shadows. High-end decor, no text, photorealistic, 8k." 
+              }
+            `;
+            break;
+
+        case 'luxury_gate':
+            productTitle = "💎 Luxe - Porte des Étoiles";
+            architectPrompt = `
+              Tu es un expert en design d'intérieur de luxe.
+              Mission : Générer le JSON pour une image de placeholder haut de gamme.
+              JSON OBLIGATOIRE :
+              { 
+                "descriptionPourLeClient": "Image générique représentant un portail imaginaire.", 
+                "promptPourImage": "Photorealistic mockup of a high-end square canvas in a minimalist luxury lounge. The canvas art features a glowing, abstract nebulous form, like a swirling gateway of starlight and magical energy opening up in the center of a very dark, deep blue void. It feels ethereal and powerful. Soft, cinematic ambient light fills the room. Clean lines, expensive textures. No text." 
+              }
+            `;
+            break;
+
+        case 'luxury_aura':
+            productTitle = "💎 Luxe - Aura Abstraite";
+            architectPrompt = `
+              Tu es un expert en design d'intérieur de luxe.
+              Mission : Générer le JSON pour une image de placeholder haut de gamme.
+              JSON OBLIGATOIRE :
+              { 
+                "descriptionPourLeClient": "Image générique représentant une aura créative.", 
+                "promptPourImage": "Interior shot of a chic, modern living space with a large square canvas on a plain wall. The art on the canvas is abstract and spiritual: a radiant, undefined aura of light bursting from the center against a dark, midnight blue textured background. It represents pure creative energy. Elegant furniture, soft directional lighting highlighting the canvas texture. Minimalist, mystical, luxury style." 
+              }
+            `;
+            break;
+
+        // --- ANCIENS SCÉNARIOS (CONSERVÉS) ---
         case 'animal':
             productTitle = "🦁 Totem Animal";
-            simulatedData = {
-                name: "Thomas", trait: "Protecteur", element: "Terre", reaction: "J'observe avant d'agir"
-            };
-            architectPrompt = `
-              Tu es un chaman expert. Profil : ${JSON.stringify(simulatedData)}.
-              Mission : Trouve l'Animal Totem (ex: Ours, Loup, Aigle).
-              JSON : { "descriptionPourLeClient": "Texte inspirant...", "promptPourImage": "Prompt ANGLAIS style Double Exposure, animal majestic fused with nature, 8k." }
-            `;
+            simulatedData = { name: "Thomas", trait: "Protecteur", element: "Terre", reaction: "J'observe avant d'agir" };
+            architectPrompt = `Tu es un chaman expert. Profil : ${JSON.stringify(simulatedData)}. Mission : Trouve l'Animal Totem. JSON : { "descriptionPourLeClient": "Texte inspirant...", "promptPourImage": "Prompt ANGLAIS style Double Exposure, animal majestic fused with nature, 8k." }`;
             break;
 
         case 'aura':
             productTitle = "✨ Aura Chromatique";
-            simulatedData = {
-                name: "Sarah", mood: "Sereine", energy: "Douce", wish: "Paix intérieure"
-            };
-            architectPrompt = `
-              Tu es un artiste de l'énergie. Profil : ${JSON.stringify(simulatedData)}.
-              Mission : Traduire son énergie en couleurs fluides.
-              JSON : { "descriptionPourLeClient": "Poème sur ses couleurs...", "promptPourImage": "Prompt ANGLAIS abstract fluid art, liquid gradients, ethereal glow, no objects, 8k." }
-            `;
+            simulatedData = { name: "Sarah", mood: "Sereine", energy: "Douce", wish: "Paix intérieure" };
+            architectPrompt = `Tu es un artiste de l'énergie. Profil : ${JSON.stringify(simulatedData)}. Mission : Traduire son énergie en couleurs. JSON : { "descriptionPourLeClient": "Poème...", "promptPourImage": "Prompt ANGLAIS abstract fluid art, liquid gradients, ethereal glow, no objects, 8k." }`;
             break;
 
         case 'tarot':
             productTitle = "🔮 Tarot de l'Âme";
-            simulatedData = {
-                name: "Julien", question: "Mon prochain défi ?", vibe: "Introspectif"
-            };
-            architectPrompt = `
-              Tu es un tarologue. Profil : ${JSON.stringify(simulatedData)}.
-              Mission : Tirer une Carte Majeure pour lui.
-              JSON : { "descriptionPourLeClient": "Interprétation de la carte...", "promptPourImage": "Prompt ANGLAIS style Art Nouveau (Mucha), mystical tarot card, golden borders, 8k." }
-            `;
+            simulatedData = { name: "Julien", question: "Mon prochain défi ?", vibe: "Introspectif" };
+            architectPrompt = `Tu es un tarologue. Profil : ${JSON.stringify(simulatedData)}. Mission : Tirer une Carte Majeure. JSON : { "descriptionPourLeClient": "Interprétation...", "promptPourImage": "Prompt ANGLAIS style Art Nouveau (Mucha), mystical tarot card, golden borders, 8k." }`;
             break;
-case 'psyche':
+
+        case 'psyche':
             productTitle = "🍄 Voyage Intérieur (Psychédélique)";
-            simulatedData = {
-                name: "Alex",
-                dream: "Expansion de conscience",
-                geometry: "Spirale Organique",
-                colors: "Vert Émeraude, Violet et Or"
-            };
-            architectPrompt = `
-              Tu es un artiste visionnaire (style Alex Grey, Android Jones ou Roger Dean).
-              Profil : ${JSON.stringify(simulatedData)}.
-              Mission : Créer une représentation visuelle de sa conscience expandue, très organique et vivante.
-              JSON attendu :
-              1. "descriptionPourLeClient" : Texte mystique sur la connexion avec la nature sacrée, le mycélium universel et les dimensions cachées.
-              2. "promptPourImage" : Prompt ANGLAIS pour art psychédélique haute définition.
-                 - STYLE : Visionary art, DMT aesthetic, Hyper-realistic textures mixed with fractals.
-                 - ÉLÉMENTS CLÉS (VRAIES FORMES) : 
-                   1. "Giant glowing fantasy mushrooms" (Champignons géants lumineux) avec des détails réalistes sur les lamelles et les chapeaux.
-                   2. "Amanita Muscaria patterns" (Motifs d'amanites rouges à points blancs) intégrés dans la spirale.
-                   3. "Stylized Cannabis Sativa leaves" (Feuilles de Sativa stylisées) formant des mandalas sacrés.
-                 - AMBIANCE : Neon colors against deep black void, bioluminescent mycelium networks connecting everything, 8k resolution, octane render.
-                 - SÉCURITÉ : Pas d'humains, pas de consommation. Juste la nature magique et la géométrie.
-            `;
+            simulatedData = { name: "Alex", dream: "Expansion de conscience", geometry: "Spirale Organique", colors: "Vert Émeraude, Violet et Or" };
+            architectPrompt = `Tu es un artiste visionnaire. Profil : ${JSON.stringify(simulatedData)}. Mission : Créer une représentation visuelle de sa conscience. JSON : { "descriptionPourLeClient": "Texte mystique...", "promptPourImage": "Prompt ANGLAIS style Visionary art, neon colors, bioluminescent mycelium networks, sacred geometry, 8k." }`;
             break;
+
         case 'egypt':
         default:
             productTitle = "☥ Héritage Égyptien";
-            simulatedData = {
-                name: "Clara", personality: "Leader naturelle", values: "Vérité"
-            };
-            architectPrompt = `
-              Tu es un prêtre égyptien. Profil : ${JSON.stringify(simulatedData)}.
-              Mission : Associer une divinité égyptienne.
-              JSON : { "descriptionPourLeClient": "Lien avec la divinité...", "promptPourImage": "Prompt ANGLAIS style Ancient Egyptian Art, Gold leaf, Lapis Lazuli, Papyrus texture, 8k." }
-            `;
+            simulatedData = { name: "Clara", personality: "Leader naturelle", values: "Vérité" };
+            architectPrompt = `Tu es un prêtre égyptien. Profil : ${JSON.stringify(simulatedData)}. Mission : Associer une divinité. JSON : { "descriptionPourLeClient": "Lien...", "promptPourImage": "Prompt ANGLAIS style Ancient Egyptian Art, Gold leaf, Lapis Lazuli, Papyrus texture, 8k." }`;
             break;
     }
 
-    architectPrompt += ` Réponds UNIQUEMENT avec un objet JSON valide.`;
+    architectPrompt += ` Réponds UNIQUEMENT avec un objet JSON valide contenant "descriptionPourLeClient" et "promptPourImage".`;
 
     // === ÉTAPE 1 : GEMINI (TEXTE) ===
     const payloadArchitect = { contents: [{ role: "user", parts: [{ text: architectPrompt }] }], generationConfig: { response_mime_type: "application/json" } };
@@ -99,7 +99,12 @@ case 'psyche':
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     const resultArchitect = await responseArchitect.json();
-    let plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
+    let plan;
+    try {
+        plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
+    } catch (e) {
+        throw new Error("Erreur parsing JSON Gemini: " + resultArchitect.candidates[0].content.parts[0].text);
+    }
     const { descriptionPourLeClient, promptPourImage } = plan;
 
     // === ÉTAPE 2 : VERTEX AI (IMAGE) ===
@@ -131,12 +136,12 @@ case 'psyche':
         <body style="background:#111; color:#eee; font-family:sans-serif; text-align:center; padding:40px;">
           <h1 style="color:#f0a500">${productTitle}</h1>
           <div style="display:flex; gap:40px; justify-content:center; align-items:start; flex-wrap:wrap;">
-            <img src="data:image/png;base64,${base64Data}" style="max-width:500px; border-radius:10px; box-shadow:0 0 30px rgba(255,255,255,0.1);" />
+            <img src="data:image/png;base64,${base64Data}" style="max-width:600px; border-radius:10px; box-shadow:0 0 30px rgba(255,255,255,0.1);" />
             <div style="max-width:400px; text-align:left; background:#222; padding:25px; border-radius:12px;">
-                <h3>Révélation :</h3>
+                <h3>Description :</h3>
                 <p style="font-size:1.1em; line-height:1.6;">${descriptionPourLeClient}</p>
                 <hr style="border-color:#444; margin:20px 0;">
-                <small style="color:#666">Prompt : ${promptPourImage}</small>
+                <small style="color:#666">Prompt utilisé : ${promptPourImage}</small>
             </div>
           </div>
         </body>
@@ -144,6 +149,7 @@ case 'psyche':
     `);
 
   } catch (error) {
+    console.error(error);
     res.status(500).send(`<h1>Erreur</h1><p>${error.message}</p>`);
   }
 }
