@@ -3,8 +3,8 @@ import { GoogleAuth } from 'google-auth-library';
 
 export default async function (req, res) {
   try {
-    // Choisir le type via l'URL. Par défaut on force le boheme pour ton test
-    const type = req.query.type || 'luxury_boho';
+    // Choisir le type via l'URL. Par défaut 'luxury_boho_v2' pour tester tes changements
+    const type = req.query.type || 'luxury_boho_v2';
     
     // --- Infos Google Cloud ---
     const projectId = 'soulstudio-art';
@@ -16,30 +16,40 @@ export default async function (req, res) {
     let productTitle = '';
 
     switch (type) {
-        // --- SCÉNARIO 3 : BOHÈME (Version Stabilisée) ---
-        // Modification : On force la présence du Canvas au début du prompt
-        case 'luxury_boho':
-            productTitle = "🌿 Mockup - Bohème Spirituel (Stabilisé)";
+        // --- SCÉNARIO 1 : BOHÈME VIBRANT (Coin Lecture) ---
+        // Changement : On met plus de couleurs (Violets/Oranges) et un décor "Fauteuil"
+        case 'luxury_boho_v2':
+            productTitle = "🔮 Mockup - Coin Lecture Mystique";
             architectPrompt = `
-              Tu es un photographe d'intérieur expert.
-              Mission : Créer un JSON pour une mise en situation produit.
+              Tu es un photographe d'intérieur.
+              Mission : Créer un JSON pour une mise en situation "Lifestyle".
               JSON :
               { 
-                "descriptionPourLeClient": "Ambiance spirituelle et douce avec focus sur la toile.", 
-                "promptPourImage": "CENTERPIECE: A large square canvas art print hanging on a beige wall. The canvas is the main subject. The art on the canvas features a glowing golden Sacred Geometry mandala on a deep black background, radiating light. CONTEXT: Below the canvas is a wooden console table with amethyst crystals and a green pothos plant. Soft natural sunlight casts shadows of leaves on the wall. Photorealistic, 8k, interior design magazine style, cozy atmosphere." 
+                "descriptionPourLeClient": "Mise en situation cosy avec une toile aux couleurs vibrantes.", 
+                "promptPourImage": "CENTERPIECE: A large 36x36 square canvas art hanging on a textured beige wall. The art is EXPLOSIVE: a mix of deep violet, fiery orange, and bright gold dust forming a cosmic mandala. CONTEXT: The canvas is hanging above a comfortable velvet armchair with a knitted throw blanket. Warm 'Golden Hour' sunlight hits the wall, enhancing the colors of the art. A stack of books on a side table. Photorealistic, 8k, cozy luxury." 
               }
             `;
             break;
 
-        // --- AUTRES SCÉNARIOS (CONSERVÉS) ---
-        case 'luxury_cosmic':
-            productTitle = "🌌 Mockup - Salon Cosmique";
-            architectPrompt = `Tu es un photographe. JSON: { "descriptionPourLeClient": "Mise en situation réaliste.", "promptPourImage": "A photorealistic wide shot of a luxurious modern living room with a large 36x36 square canvas art hanging on a white wall. The art is a deep cosmic abstract design: swirling midnight blue nebulas and gold dust. Soft warm lighting, beige sofa. 8k resolution." }`;
+        // --- SCÉNARIO 2 : MINIMALISTE ÉLECTRIQUE (Focus Couleur) ---
+        // Changement : Mur très blanc, Art très "Bleu/Cyan/Or" intense comme tes exemples
+        case 'luxury_vibrant':
+            productTitle = "⚡ Mockup - Énergie Pure";
+            architectPrompt = `
+              Tu es un directeur artistique.
+              Mission : Créer un JSON où la toile est l'élément le plus coloré de la pièce.
+              JSON :
+              { 
+                "descriptionPourLeClient": "Contraste fort entre le mur blanc et l'énergie de la toile.", 
+                "promptPourImage": "CENTERPIECE: A premium square canvas art print on a pristine white wall. The art features a blindingly bright central star emitting waves of Electric Blue, Cyan, and Magenta energy against a deep black void. It looks like a high-tech spiritual portal. CONTEXT: Minimalist decor, a modern ceramic vase with dry branches on the side. Sharp, high-fashion lighting casting crisp shadows. 8k, ultra-detailed." 
+              }
+            `;
             break;
 
-        case 'luxury_gallery':
-            productTitle = "🏛️ Mockup - Galerie d'Art";
-            architectPrompt = `Tu es un directeur artistique. JSON: { "descriptionPourLeClient": "Focus qualité.", "promptPourImage": "A close-up side angle of a premium 36x36 square canvas print hanging in a high-end art gallery. Spotlight on the canvas. The art is a mystical gradient of deep indigo and cyan light. Minimalist background. 8k." }`;
+        // --- ANCIENS (Gardés pour référence) ---
+        case 'luxury_boho':
+            productTitle = "🌿 Mockup - Bohème (V1)";
+            architectPrompt = `Tu es photographe. JSON: { "descriptionPourLeClient": "V1", "promptPourImage": "CENTERPIECE: A large square canvas art on a beige wall. Art is Golden Sacred Geometry on black. CONTEXT: Wooden console, crystals, plants. Soft light. 8k." }`;
             break;
 
         default:
