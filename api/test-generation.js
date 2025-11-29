@@ -3,8 +3,8 @@ import { GoogleAuth } from 'google-auth-library';
 
 export default async function (req, res) {
   try {
-    // Choisir le type via l'URL.
-    const type = req.query.type || 'luxury_cosmic';
+    // Choisir le type via l'URL. Par défaut on force le boheme pour ton test
+    const type = req.query.type || 'luxury_boho';
     
     // --- Infos Google Cloud ---
     const projectId = 'soulstudio-art';
@@ -15,63 +15,37 @@ export default async function (req, res) {
     let architectPrompt = '';
     let productTitle = '';
 
-    // === CONFIGURATION DES NOUVEAUX SCÉNARIOS BASÉS SUR TES IMAGES ===
     switch (type) {
-        // SCÉNARIO 1 : LE SALON "ELEGANCE COSMIQUE"
-        // But : Montrer une toile 36x36 dans un salon très classe. Art abstrait bleu/or.
+        // --- SCÉNARIO 3 : BOHÈME (Version Stabilisée) ---
+        // Modification : On force la présence du Canvas au début du prompt
+        case 'luxury_boho':
+            productTitle = "🌿 Mockup - Bohème Spirituel (Stabilisé)";
+            architectPrompt = `
+              Tu es un photographe d'intérieur expert.
+              Mission : Créer un JSON pour une mise en situation produit.
+              JSON :
+              { 
+                "descriptionPourLeClient": "Ambiance spirituelle et douce avec focus sur la toile.", 
+                "promptPourImage": "CENTERPIECE: A large square canvas art print hanging on a beige wall. The canvas is the main subject. The art on the canvas features a glowing golden Sacred Geometry mandala on a deep black background, radiating light. CONTEXT: Below the canvas is a wooden console table with amethyst crystals and a green pothos plant. Soft natural sunlight casts shadows of leaves on the wall. Photorealistic, 8k, interior design magazine style, cozy atmosphere." 
+              }
+            `;
+            break;
+
+        // --- AUTRES SCÉNARIOS (CONSERVÉS) ---
         case 'luxury_cosmic':
             productTitle = "🌌 Mockup - Salon Cosmique";
-            architectPrompt = `
-              Tu es un photographe d'architecture de luxe.
-              Mission : Créer un JSON pour une image de mise en situation (Mockup).
-              JSON :
-              { 
-                "descriptionPourLeClient": "Mise en situation réaliste : Toile abstraite dans un salon.", 
-                "promptPourImage": "A photorealistic wide shot of a luxurious modern living room with a large 36x36 square canvas art hanging on a white wall. The art on the canvas is a deep cosmic abstract design: swirling midnight blue nebulas and gold dust, NO specific figures, just pure magical energy. Soft warm lighting, beige sofa, expensive decor. 8k resolution, architectural digest style." 
-              }
-            `;
+            architectPrompt = `Tu es un photographe. JSON: { "descriptionPourLeClient": "Mise en situation réaliste.", "promptPourImage": "A photorealistic wide shot of a luxurious modern living room with a large 36x36 square canvas art hanging on a white wall. The art is a deep cosmic abstract design: swirling midnight blue nebulas and gold dust. Soft warm lighting, beige sofa. 8k resolution." }`;
             break;
 
-        // SCÉNARIO 2 : LA GALERIE D'ART (Minimaliste)
-        // But : Focus total sur la toile avec un éclairage de musée. Très "Premium".
         case 'luxury_gallery':
             productTitle = "🏛️ Mockup - Galerie d'Art";
-            architectPrompt = `
-              Tu es un directeur artistique.
-              Mission : Créer un JSON pour une image style "Galerie".
-              JSON :
-              { 
-                "descriptionPourLeClient": "Focus sur la qualité du produit (Toile Galerie).", 
-                "promptPourImage": "A close-up side angle of a premium 36x36 square canvas print hanging in a high-end art gallery. A spotlight hits the canvas. The art is a mystical gradient of deep indigo and cyan light, representing a soul portal. The canvas texture and side wrap are visible. Minimalist background, sharp focus on the art. 8k." 
-              }
-            `;
+            architectPrompt = `Tu es un directeur artistique. JSON: { "descriptionPourLeClient": "Focus qualité.", "promptPourImage": "A close-up side angle of a premium 36x36 square canvas print hanging in a high-end art gallery. Spotlight on the canvas. The art is a mystical gradient of deep indigo and cyan light. Minimalist background. 8k." }`;
             break;
 
-        // SCÉNARIO 3 : L'INTÉRIEUR BOHÈME CHIC (Chaleureux)
-        // But : Montrer que ça fit bien dans une maison normale mais stylée.
-        case 'luxury_boho':
-            productTitle = "🌿 Mockup - Bohème Spirituel";
-            architectPrompt = `
-              Tu es un décorateur d'intérieur.
-              Mission : Créer un JSON pour une ambiance chaleureuse.
-              JSON :
-              { 
-                "descriptionPourLeClient": "Ambiance spirituelle et douce.", 
-                "promptPourImage": "Interior design shot of a cozy spiritual corner in a home. A large 36x36 square canvas hangs above a wooden console table with crystals and a plant. The canvas art features a glowing golden circle of energy on a dark background (Sacred Geometry style but abstract). Sunlight streaming in. Photorealistic, cozy atmosphere." 
-              }
-            `;
-            break;
-
-        // --- (On garde tes anciens tests au cas où) ---
-        case 'psyche':
-             productTitle = "🍄 Test Psychédélique";
-             architectPrompt = `Tu es un artiste visionnaire. JSON: { "descriptionPourLeClient": "Test Psyche", "promptPourImage": "Abstract fractal art, vibrant neon colors, sacred geometry spirals, bioluminescent textures, no specific objects, 8k, visionary art style." }`;
-             break;
-             
         default:
-            productTitle = "❓ Test Standard";
-            architectPrompt = `Tu es un assistant. JSON: { "descriptionPourLeClient": "Test défaut", "promptPourImage": "A mysterious blue energy sphere, abstract art, 8k." }`;
-            break;
+             productTitle = "❓ Test Standard";
+             architectPrompt = `Tu es un assistant. JSON: { "descriptionPourLeClient": "Test défaut", "promptPourImage": "A mysterious blue energy sphere, abstract art, 8k." }`;
+             break;
     }
 
     architectPrompt += ` Réponds UNIQUEMENT avec un objet JSON valide.`;
@@ -98,7 +72,7 @@ export default async function (req, res) {
     const token = accessToken.token;
 
     const apiUrlImage = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${modelId}:predict`;
-    const payloadImage = { instances: [ { prompt: promptPourImage } ], parameters: { sampleCount: 1, aspectRatio: "1:1" } }; // Aspect ratio carré
+    const payloadImage = { instances: [ { prompt: promptPourImage } ], parameters: { sampleCount: 1, aspectRatio: "1:1" } };
 
     const responseImage = await fetch(apiUrlImage, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payloadImage) });
     const resultImage = await responseImage.json();
