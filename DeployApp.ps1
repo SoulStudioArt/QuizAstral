@@ -1,37 +1,73 @@
 ﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Configuration de la fenêtre
+# ==========================================
+# ⚡ CONFIGURATION DES RACCOURCIS
+# ==========================================
+$raccourcis = @(
+    @{ Nom="Site Web (Soul Studio)"; Icon="🎨"; Path="https://soulstudioart.com" },
+    @{ Nom="Shopify - Commandes"; Icon="🛍️"; Path="https://admin.shopify.com/orders" },
+    @{ Nom="Shopify - Code"; Icon="💻"; Path="https://admin.shopify.com/themes" },
+    @{ Nom="Printify - Production"; Icon="👕"; Path="https://printify.com/app/store" },
+    @{ Nom="Gmail - Boîte Pro"; Icon="📧"; Path="https://mail.google.com" },
+    @{ Nom="Gemini - Assistant"; Icon="🧠"; Path="https://gemini.google.com" },
+    @{ Nom="Google Cloud - Quotas"; Icon="☁️"; Path="https://console.cloud.google.com/iam-admin/quotas" },
+    @{ Nom="Vercel - Déploiements"; Icon="🚀"; Path="https://vercel.com/dashboard" },
+    @{ Nom="Vercel - Logs"; Icon="⚠️"; Path="https://vercel.com/dashboard" },
+    @{ Nom="Vercel - Images"; Icon="🖼️"; Path="https://vercel.com/dashboard/storage" },
+    @{ Nom="Labo - Test Psyché"; Icon="🧪"; Path="https://github.com" },
+    @{ Nom="GitHub - Source"; Icon="🐙"; Path="https://github.com" },
+    @{ Nom="Dossier LOCAL (PC)"; Icon="📂"; Path="C:\Users\SebBern\mon-quiz-react" }
+)
+
+# ==========================================
+# 🎨 INTERFACE GRAPHIQUE
+# ==========================================
+
+# Création de la fenêtre
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "Soul Studio Deployer 🚀"
-$form.Size = New-Object System.Drawing.Size(600,500)
+$form.Text = "Soul Studio Command Center 🚀"
+$form.Size = New-Object System.Drawing.Size(600,750)
 $form.StartPosition = "CenterScreen"
 $form.BackColor = "#1e1e1e"
+$form.FormBorderStyle = "FixedDialog" 
+$form.MaximizeBox = $false
 
-# Titre
-$label = New-Object System.Windows.Forms.Label
-$label.Text = "Message de la mise à jour :"
-$label.Location = New-Object System.Drawing.Point(20,20)
-$label.Size = New-Object System.Drawing.Size(200,30)
-$label.ForeColor = "White"
-$label.Font = New-Object System.Drawing.Font("Segoe UI", 10)
-$form.Controls.Add($label)
+# Titre Déploiement
+$lblDeploy = New-Object System.Windows.Forms.Label
+$lblDeploy.Text = "📢 DÉPLOIEMENT RAPIDE"
+$lblDeploy.Location = New-Object System.Drawing.Point(20,15)
+$lblDeploy.Size = New-Object System.Drawing.Size(540,25)
+$lblDeploy.ForeColor = "#aaaaaa"
+$lblDeploy.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+$form.Controls.Add($lblDeploy)
 
 # Boîte de texte
 $textBox = New-Object System.Windows.Forms.TextBox
-$textBox.Location = New-Object System.Drawing.Point(20,50)
+$textBox.Location = New-Object System.Drawing.Point(20,45)
 $textBox.Size = New-Object System.Drawing.Size(540,30)
 $textBox.Font = New-Object System.Drawing.Font("Segoe UI", 10)
-$textBox.Text = "Mise à jour du site"
+$textBox.Text = "Mise à jour via Dashboard"
 $form.Controls.Add($textBox)
 
-# Zone de logs (Console noire)
+# Bouton DÉPLOYER
+$btnDeploy = New-Object System.Windows.Forms.Button
+$btnDeploy.Location = New-Object System.Drawing.Point(20,85)
+$btnDeploy.Size = New-Object System.Drawing.Size(540,40)
+$btnDeploy.Text = "🚀 ENVOYER SUR VERCEL"
+$btnDeploy.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+$btnDeploy.BackColor = "White"
+$btnDeploy.ForeColor = "Black"
+$btnDeploy.Cursor = [System.Windows.Forms.Cursors]::Hand
+$form.Controls.Add($btnDeploy)
+
+# Zone de logs
 $outputBox = New-Object System.Windows.Forms.RichTextBox
-$outputBox.Location = New-Object System.Drawing.Point(20,150)
-$outputBox.Size = New-Object System.Drawing.Size(540,280)
+$outputBox.Location = New-Object System.Drawing.Point(20,140)
+$outputBox.Size = New-Object System.Drawing.Size(540,120)
 $outputBox.BackColor = "Black"
 $outputBox.ForeColor = "#00ff00"
-$outputBox.Font = New-Object System.Drawing.Font("Consolas", 10)
+$outputBox.Font = New-Object System.Drawing.Font("Consolas", 9)
 $outputBox.ReadOnly = $true
 $form.Controls.Add($outputBox)
 
@@ -41,36 +77,27 @@ function Log-Write($text) {
     $form.Refresh()
 }
 
-# Bouton DÉPLOYER
-$button = New-Object System.Windows.Forms.Button
-$button.Location = New-Object System.Drawing.Point(20,90)
-$button.Size = New-Object System.Drawing.Size(540,40)
-$button.Text = "🚀 ENVOYER SUR VERCEL"
-$button.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
-$button.BackColor = "White"
-$button.ForeColor = "Black"
-$button.Cursor = [System.Windows.Forms.Cursors]::Hand
-
-$button.Add_Click({
+# --- LOGIQUE DÉPLOIEMENT ---
+$btnDeploy.Add_Click({
     $msg = $textBox.Text
-    $button.Enabled = $false
-    $button.Text = "⏳ En cours..."
+    $btnDeploy.Enabled = $false
+    $btnDeploy.Text = "⏳ En cours..."
     $outputBox.Clear()
     
-    # Se placer dans le dossier où se trouve le script
-    Set-Location $PSScriptRoot
+    # Force le dossier de travail
+    Set-Location "C:\Users\SebBern\mon-quiz-react"
     
     Log-Write "--- DÉBUT DU DÉPLOIEMENT ---"
+    Log-Write "📂 Dossier : C:\Users\SebBern\mon-quiz-react"
     
-    Log-Write "1. Ajout des fichiers (git add)..."
-    $proc = Start-Process git -ArgumentList "add ." -NoNewWindow -PassThru -Wait
+    Log-Write "1. Git Add..."
+    Start-Process git -ArgumentList "add ." -NoNewWindow -Wait
     
-    Log-Write "2. Enregistrement (git commit)..."
-    $proc = Start-Process git -ArgumentList "commit -m `"$msg`"" -NoNewWindow -PassThru -Wait
+    Log-Write "2. Git Commit..."
+    Start-Process git -ArgumentList "commit -m `"$msg`"" -NoNewWindow -Wait
     
-    Log-Write "3. Envoi vers le Cloud (git push)..."
+    Log-Write "3. Git Push..."
     
-    # Configuration pour capturer les erreurs de git push
     $pinfo = New-Object System.Diagnostics.ProcessStartInfo
     $pinfo.FileName = "git"
     $pinfo.Arguments = "push"
@@ -91,15 +118,67 @@ $button.Add_Click({
     Log-Write $stdErr
     
     if ($p.ExitCode -eq 0) {
-        Log-Write "✨ SUCCÈS ! Site mis à jour."
+        Log-Write "✨ SUCCÈS ! Site à jour."
         [System.Windows.Forms.MessageBox]::Show("Déploiement réussi !", "Soul Studio")
     } else {
-        Log-Write "⚠️ Vérifiez les messages ci-dessus."
+        Log-Write "⚠️ Vérifiez les logs ci-dessus."
     }
 
-    $button.Text = "🚀 ENVOYER SUR VERCEL"
-    $button.Enabled = $true
+    $btnDeploy.Text = "🚀 ENVOYER SUR VERCEL"
+    $btnDeploy.Enabled = $true
 })
 
-$form.Controls.Add($button)
-$form.ShowDialog()
+# ==========================================
+# ⚡ SECTION ACCÈS RAPIDE (CORRIGÉE)
+# ==========================================
+
+$separator = New-Object System.Windows.Forms.Label
+$separator.BorderStyle = "Fixed3D"
+$separator.Location = New-Object System.Drawing.Point(20, 280)
+$separator.Size = New-Object System.Drawing.Size(540, 2)
+$form.Controls.Add($separator)
+
+$lblShortcuts = New-Object System.Windows.Forms.Label
+$lblShortcuts.Text = "⚡ NAVIGATION & OUTILS"
+$lblShortcuts.Location = New-Object System.Drawing.Point(20,295)
+$lblShortcuts.Size = New-Object System.Drawing.Size(540,25)
+$lblShortcuts.ForeColor = "#aaaaaa"
+$lblShortcuts.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+$form.Controls.Add($lblShortcuts)
+
+$flowPanel = New-Object System.Windows.Forms.FlowLayoutPanel
+$flowPanel.Location = New-Object System.Drawing.Point(15, 325)
+$flowPanel.Size = New-Object System.Drawing.Size(570, 380)
+$flowPanel.FlowDirection = "LeftToRight"
+$flowPanel.AutoScroll = $true
+$flowPanel.WrapContents = $true
+$form.Controls.Add($flowPanel)
+
+foreach ($item in $raccourcis) {
+    $btn = New-Object System.Windows.Forms.Button
+    $btn.Text = "$($item.Icon)`n$($item.Nom)"
+    $btn.Size = New-Object System.Drawing.Size(130, 80)
+    $btn.Font = New-Object System.Drawing.Font("Segoe UI Emoji", 9) 
+    $btn.BackColor = "#333333"
+    $btn.ForeColor = "White"
+    $btn.FlatStyle = "Flat"
+    $btn.Cursor = [System.Windows.Forms.Cursors]::Hand
+    $btn.Margin = New-Object System.Windows.Forms.Padding(5)
+    
+    # Tag pour le lien
+    $btn.Tag = $item.Path
+    
+    $btn.Add_MouseEnter({ $this.BackColor = "#555555" })
+    $btn.Add_MouseLeave({ $this.BackColor = "#333333" })
+    
+    $btn.Add_Click({
+        try { Start-Process $this.Tag } 
+        catch { [System.Windows.Forms.MessageBox]::Show("Erreur : $($this.Tag)", "Oups") }
+    })
+    
+    $flowPanel.Controls.Add($btn)
+}
+
+# --- C'EST ICI QUE C'ÉTAIT CASSÉ ---
+# Force l'affichage de la fenêtre et ignore la sortie console
+[void] $form.ShowDialog()
