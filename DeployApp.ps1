@@ -1,5 +1,15 @@
 ﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+
+# ==========================================
+# ⚙️ CONFIGURATION VERCEL (API)
+# ==========================================
+# Ton Token
+$VercelToken = "tBW7sIXz3plpsHmL2vJkLL7J" 
+
+# Ton Nom de Projet (Mis à jour selon ton lien)
+$VercelProjectName = "soul-studio-art" 
 
 # ==========================================
 # ⚡ CONFIGURATION DES RACCOURCIS
@@ -7,15 +17,11 @@ Add-Type -AssemblyName System.Drawing
 $raccourcis = @(
     @{ Nom="Site Web (Soul Studio)"; Icon="🎨"; Path="https://soulstudioart.com" },
     @{ Nom="Shopify - Commandes"; Icon="🛍️"; Path="https://admin.shopify.com/orders" },
-    @{ Nom="Shopify - Code"; Icon="💻"; Path="https://admin.shopify.com/themes" },
     @{ Nom="Printify - Production"; Icon="👕"; Path="https://printify.com/app/store" },
     @{ Nom="Gmail - Boîte Pro"; Icon="📧"; Path="https://mail.google.com" },
     @{ Nom="Gemini - Assistant"; Icon="🧠"; Path="https://gemini.google.com" },
-    @{ Nom="Google Cloud - Quotas"; Icon="☁️"; Path="https://console.cloud.google.com/iam-admin/quotas" },
     @{ Nom="Vercel - Déploiements"; Icon="🚀"; Path="https://vercel.com/dashboard" },
     @{ Nom="Vercel - Logs"; Icon="⚠️"; Path="https://vercel.com/dashboard" },
-    @{ Nom="Vercel - Images"; Icon="🖼️"; Path="https://vercel.com/dashboard/storage" },
-    @{ Nom="Labo - Test Psyché"; Icon="🧪"; Path="https://github.com" },
     @{ Nom="GitHub - Source"; Icon="🐙"; Path="https://github.com" },
     @{ Nom="Dossier LOCAL (PC)"; Icon="📂"; Path="C:\Users\SebBern\mon-quiz-react" }
 )
@@ -24,35 +30,124 @@ $raccourcis = @(
 # 🎨 INTERFACE GRAPHIQUE
 # ==========================================
 
-# Création de la fenêtre
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "Soul Studio Command Center 🚀"
-$form.Size = New-Object System.Drawing.Size(600,750)
+$form.Text = "Soul Studio Command Center v3.0 🚀"
+$form.Size = New-Object System.Drawing.Size(600,800)
 $form.StartPosition = "CenterScreen"
 $form.BackColor = "#1e1e1e"
 $form.FormBorderStyle = "FixedDialog" 
 $form.MaximizeBox = $false
 
-# Titre Déploiement
+# --- FONCTION : RÉCUPÉRER STATUT VERCEL ---
+function Get-VercelStatus {
+    $lblStatusResult.ForeColor = "Yellow"
+    $lblStatusResult.Text = "Chargement..."
+    $form.Refresh()
+
+    try {
+        # On cherche le projet exact
+        $url = "https://api.vercel.com/v6/deployments?limit=1&search=$VercelProjectName"
+        $headers = @{ "Authorization" = "Bearer $VercelToken" }
+        
+        $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Get
+        
+        if ($response.deployments.Count -gt 0) {
+            $lastDeploy = $response.deployments[0]
+            $state = $lastDeploy.state
+            
+            # Mise à jour de l'affichage
+            $lblStatusResult.Text = "$($state.ToUpper())"
+            $lblCommitMsg.Text = "📝: $($lastDeploy.name)" 
+            
+            # Gestion des couleurs
+            if ($state -eq "READY") {
+                $lblStatusResult.ForeColor = "#00ff00" # Vert
+                $statusIndicator.BackColor = "#00ff00"
+            } elseif ($state -eq "BUILDING" -or $state -eq "QUEUED") {
+                $lblStatusResult.ForeColor = "Orange"
+                $statusIndicator.BackColor = "Orange"
+            } elseif ($state -eq "ERROR" -or $state -eq "CANCELED") {
+                $lblStatusResult.ForeColor = "Red"
+                $statusIndicator.BackColor = "Red"
+            } else {
+                $lblStatusResult.ForeColor = "White"
+                $statusIndicator.BackColor = "Gray"
+            }
+        } else {
+            $lblStatusResult.Text = "Projet introuvable"
+            $lblStatusResult.ForeColor = "Red"
+            $lblCommitMsg.Text = "Vérifier le nom: $VercelProjectName"
+        }
+    } catch {
+        $lblStatusResult.Text = "Erreur Connexion"
+        $lblStatusResult.ForeColor = "Red"
+    }
+}
+
+# --- HEADER & MONITEUR ---
+$grpMonitor = New-Object System.Windows.Forms.GroupBox
+$grpMonitor.Location = New-Object System.Drawing.Point(20, 10)
+$grpMonitor.Size = New-Object System.Drawing.Size(540, 70)
+$grpMonitor.Text = "État Vercel (Live)"
+$grpMonitor.ForeColor = "#aaaaaa"
+$form.Controls.Add($grpMonitor)
+
+# Indicateur rond
+$statusIndicator = New-Object System.Windows.Forms.Label
+$statusIndicator.Location = New-Object System.Drawing.Point(15, 25)
+$statusIndicator.Size = New-Object System.Drawing.Size(15, 15)
+$statusIndicator.BackColor = "Gray"
+$grpMonitor.Controls.Add($statusIndicator)
+
+# Texte Statut
+$lblStatusResult = New-Object System.Windows.Forms.Label
+$lblStatusResult.Location = New-Object System.Drawing.Point(40, 23)
+$lblStatusResult.Size = New-Object System.Drawing.Size(200, 20)
+$lblStatusResult.Text = "Non connecté"
+$lblStatusResult.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$lblStatusResult.ForeColor = "White"
+$grpMonitor.Controls.Add($lblStatusResult)
+
+# Texte Commit
+$lblCommitMsg = New-Object System.Windows.Forms.Label
+$lblCommitMsg.Location = New-Object System.Drawing.Point(40, 45)
+$lblCommitMsg.Size = New-Object System.Drawing.Size(400, 20)
+$lblCommitMsg.Text = "---"
+$lblCommitMsg.Font = New-Object System.Drawing.Font("Segoe UI", 8)
+$lblCommitMsg.ForeColor = "#888888"
+$grpMonitor.Controls.Add($lblCommitMsg)
+
+# Bouton Refresh
+$btnRefresh = New-Object System.Windows.Forms.Button
+$btnRefresh.Location = New-Object System.Drawing.Point(460, 20)
+$btnRefresh.Size = New-Object System.Drawing.Size(70, 35)
+$btnRefresh.Text = "↻"
+$btnRefresh.Font = New-Object System.Drawing.Font("Segoe UI", 14)
+$btnRefresh.BackColor = "#333333"
+$btnRefresh.ForeColor = "White"
+$btnRefresh.FlatStyle = "Flat"
+$btnRefresh.Add_Click({ Get-VercelStatus })
+$grpMonitor.Controls.Add($btnRefresh)
+
+
+# --- SECTION DÉPLOIEMENT ---
 $lblDeploy = New-Object System.Windows.Forms.Label
 $lblDeploy.Text = "📢 DÉPLOIEMENT RAPIDE"
-$lblDeploy.Location = New-Object System.Drawing.Point(20,15)
+$lblDeploy.Location = New-Object System.Drawing.Point(20,95)
 $lblDeploy.Size = New-Object System.Drawing.Size(540,25)
 $lblDeploy.ForeColor = "#aaaaaa"
 $lblDeploy.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 $form.Controls.Add($lblDeploy)
 
-# Boîte de texte
 $textBox = New-Object System.Windows.Forms.TextBox
-$textBox.Location = New-Object System.Drawing.Point(20,45)
+$textBox.Location = New-Object System.Drawing.Point(20,120)
 $textBox.Size = New-Object System.Drawing.Size(540,30)
 $textBox.Font = New-Object System.Drawing.Font("Segoe UI", 10)
 $textBox.Text = "Mise à jour via Dashboard"
 $form.Controls.Add($textBox)
 
-# Bouton DÉPLOYER
 $btnDeploy = New-Object System.Windows.Forms.Button
-$btnDeploy.Location = New-Object System.Drawing.Point(20,85)
+$btnDeploy.Location = New-Object System.Drawing.Point(20,160)
 $btnDeploy.Size = New-Object System.Drawing.Size(540,40)
 $btnDeploy.Text = "🚀 ENVOYER SUR VERCEL"
 $btnDeploy.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
@@ -61,10 +156,9 @@ $btnDeploy.ForeColor = "Black"
 $btnDeploy.Cursor = [System.Windows.Forms.Cursors]::Hand
 $form.Controls.Add($btnDeploy)
 
-# Zone de logs
 $outputBox = New-Object System.Windows.Forms.RichTextBox
-$outputBox.Location = New-Object System.Drawing.Point(20,140)
-$outputBox.Size = New-Object System.Drawing.Size(540,120)
+$outputBox.Location = New-Object System.Drawing.Point(20,210)
+$outputBox.Size = New-Object System.Drawing.Size(540,100)
 $outputBox.BackColor = "Black"
 $outputBox.ForeColor = "#00ff00"
 $outputBox.Font = New-Object System.Drawing.Font("Consolas", 9)
@@ -77,26 +171,19 @@ function Log-Write($text) {
     $form.Refresh()
 }
 
-# --- LOGIQUE DÉPLOIEMENT ---
 $btnDeploy.Add_Click({
     $msg = $textBox.Text
     $btnDeploy.Enabled = $false
     $btnDeploy.Text = "⏳ En cours..."
     $outputBox.Clear()
     
-    # Force le dossier de travail
     Set-Location "C:\Users\SebBern\mon-quiz-react"
     
-    Log-Write "--- DÉBUT DU DÉPLOIEMENT ---"
-    Log-Write "📂 Dossier : C:\Users\SebBern\mon-quiz-react"
-    
-    Log-Write "1. Git Add..."
+    Log-Write "--- DÉPLOIEMENT ---"
     Start-Process git -ArgumentList "add ." -NoNewWindow -Wait
-    
-    Log-Write "2. Git Commit..."
     Start-Process git -ArgumentList "commit -m `"$msg`"" -NoNewWindow -Wait
     
-    Log-Write "3. Git Push..."
+    Log-Write "Envoi vers Vercel..."
     
     $pinfo = New-Object System.Diagnostics.ProcessStartInfo
     $pinfo.FileName = "git"
@@ -118,10 +205,12 @@ $btnDeploy.Add_Click({
     Log-Write $stdErr
     
     if ($p.ExitCode -eq 0) {
-        Log-Write "✨ SUCCÈS ! Site à jour."
-        [System.Windows.Forms.MessageBox]::Show("Déploiement réussi !", "Soul Studio")
+        Log-Write "✨ Push terminé. Vérification Vercel..."
+        Start-Sleep -Seconds 2
+        Get-VercelStatus
+        [System.Windows.Forms.MessageBox]::Show("Push envoyé ! Le statut va passer en BUILDING.", "Soul Studio")
     } else {
-        Log-Write "⚠️ Vérifiez les logs ci-dessus."
+        Log-Write "⚠️ Erreur."
     }
 
     $btnDeploy.Text = "🚀 ENVOYER SUR VERCEL"
@@ -129,26 +218,18 @@ $btnDeploy.Add_Click({
 })
 
 # ==========================================
-# ⚡ SECTION ACCÈS RAPIDE (CORRIGÉE)
+# ⚡ GRID BOUTONS
 # ==========================================
 
 $separator = New-Object System.Windows.Forms.Label
 $separator.BorderStyle = "Fixed3D"
-$separator.Location = New-Object System.Drawing.Point(20, 280)
+$separator.Location = New-Object System.Drawing.Point(20, 325)
 $separator.Size = New-Object System.Drawing.Size(540, 2)
 $form.Controls.Add($separator)
 
-$lblShortcuts = New-Object System.Windows.Forms.Label
-$lblShortcuts.Text = "⚡ NAVIGATION & OUTILS"
-$lblShortcuts.Location = New-Object System.Drawing.Point(20,295)
-$lblShortcuts.Size = New-Object System.Drawing.Size(540,25)
-$lblShortcuts.ForeColor = "#aaaaaa"
-$lblShortcuts.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
-$form.Controls.Add($lblShortcuts)
-
 $flowPanel = New-Object System.Windows.Forms.FlowLayoutPanel
-$flowPanel.Location = New-Object System.Drawing.Point(15, 325)
-$flowPanel.Size = New-Object System.Drawing.Size(570, 380)
+$flowPanel.Location = New-Object System.Drawing.Point(15, 340)
+$flowPanel.Size = New-Object System.Drawing.Size(570, 400)
 $flowPanel.FlowDirection = "LeftToRight"
 $flowPanel.AutoScroll = $true
 $flowPanel.WrapContents = $true
@@ -164,8 +245,6 @@ foreach ($item in $raccourcis) {
     $btn.FlatStyle = "Flat"
     $btn.Cursor = [System.Windows.Forms.Cursors]::Hand
     $btn.Margin = New-Object System.Windows.Forms.Padding(5)
-    
-    # Tag pour le lien
     $btn.Tag = $item.Path
     
     $btn.Add_MouseEnter({ $this.BackColor = "#555555" })
@@ -175,10 +254,8 @@ foreach ($item in $raccourcis) {
         try { Start-Process $this.Tag } 
         catch { [System.Windows.Forms.MessageBox]::Show("Erreur : $($this.Tag)", "Oups") }
     })
-    
     $flowPanel.Controls.Add($btn)
 }
 
-# --- C'EST ICI QUE C'ÉTAIT CASSÉ ---
-# Force l'affichage de la fenêtre et ignore la sortie console
+$form.Add_Shown({ Get-VercelStatus })
 [void] $form.ShowDialog()
