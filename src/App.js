@@ -1,6 +1,22 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import './App.css'; 
 
+// --- FIX CSS POUR LE FOND JAUNE (AUTOFILL MOBILE) ---
+// Cette astuce force le navigateur à "peindre" par-dessus le jaune avec du gris foncé
+const globalStyles = `
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus {
+    -webkit-text-fill-color: white !important;
+    -webkit-box-shadow: 0 0 0px 1000px #252525 inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: white;
+  }
+`;
+
 const questions = [
   { id: 'name', label: 'Quel est votre prénom ?', placeholder: 'Ex: Clara', type: 'text', required: true },
   { id: 'birthDate', label: 'Quelle est votre date de naissance ?', type: 'date', required: true },
@@ -125,7 +141,7 @@ const Quiz = () => {
     window.top.location.href = lienFinal;
   };
 
-  // --- COMPOSANT ZOOM (LIGHTBOX) ---
+  // --- COMPOSANT ZOOM ---
   const ZoomModal = () => {
     if (!isZoomed) return null;
     return (
@@ -149,16 +165,16 @@ const Quiz = () => {
   };
 
   const renderContent = () => {
-if (step === 0) {
+    if (step === 0) {
       return (
         <div className="text-center space-y-10 py-12">
           
-          {/* --- TITRE ÉPURÉ --- */}
+          {/* TITRE ÉPURÉ */}
           <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
             Univers <span className="text-indigo-400">Céleste</span> 🌟
           </h2>
           
-          {/* --- DESCRIPTION FUSION IA --- */}
+          {/* DESCRIPTION */}
           <p className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
             Vivez la fusion entre l'énergie céleste et l'intelligence artificielle. 
             Laissez la technologie interpréter votre signature astrale pour révéler l'image unique de votre essence.
@@ -187,6 +203,7 @@ if (step === 0) {
       const isLastQuestion = currentQuestionIndex >= maxQuestions - 1;
 
       const renderInput = (question) => {
+        // Style Dark Mode pour les inputs
         const inputClasses = "w-full max-w-lg mx-auto px-4 py-3 bg-[#252525] border border-gray-700 text-white rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-gray-500 transition-colors";
         
         if (question.type === 'textarea') {
@@ -248,7 +265,6 @@ if (step === 0) {
     if (step === 2) {
       return (
         <div className="flex flex-col items-center justify-center p-12 space-y-8 text-center">
-          {/* Custom Spinner Blanc/Violet */}
           <div className="w-16 h-16 border-4 border-indigo-900 border-t-indigo-500 rounded-full animate-spin"></div> 
           <h2 className="text-2xl font-bold text-white">Création de votre Révélation...</h2>
           <p className="text-gray-400 text-lg">L'architecte dessine les plans, l'artiste prépare ses pinceaux...<br/>Votre œuvre unique arrive.</p>
@@ -256,7 +272,7 @@ if (step === 0) {
       );
     }
     
-    // --- ÉTAPE 3 : RÉSULTAT DARK MODE ---
+    // ÉTAPE 3 : RÉSULTAT
     if (step === 3) {
       return (
         <div className="space-y-12 py-6">
@@ -280,7 +296,7 @@ if (step === 0) {
               </div>
             </div>
 
-            {/* DESCRIPTION & ACTION */}
+            {/* DESCRIPTION */}
             <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-6 lg:pt-4">
               <h3 className="text-2xl font-bold text-white">L'Essence de votre Design</h3>
               
@@ -339,9 +355,10 @@ if (step === 0) {
   };
 
   return (
-    // FOND GLOBAL NOIR PROFOND + GRIS FONCÉ
     <div className="font-sans w-full min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center p-4">
-      {/* CARTE PRINCIPALE GRIS FONCÉ */}
+      {/* Injection des styles CSS correctifs */}
+      <style>{globalStyles}</style>
+      
       <div className="w-full max-w-6xl p-6 md:p-12 bg-[#161616] rounded-3xl shadow-2xl border border-gray-800 mx-auto my-8">
         {renderContent()}
       </div>
