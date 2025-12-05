@@ -149,17 +149,21 @@ const Quiz = () => {
   };
 
   const renderContent = () => {
-    if (step === 0) {
+if (step === 0) {
       return (
         <div className="text-center space-y-10 py-12">
-          {/* Titre Principal */}
-          <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-            Bienvenue dans l'univers de <span className="text-indigo-400">Soul Studio Art</span> 🌟
+          
+          {/* --- TITRE ÉPURÉ --- */}
+          <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
+            Univers <span className="text-indigo-400">Céleste</span> 🌟
           </h2>
+          
+          {/* --- DESCRIPTION FUSION IA --- */}
           <p className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
-            Préparez-vous à découvrir votre "Révélation Céleste" personnalisée, accompagnée d'une œuvre d'art unique.
-            Choisissez la durée de votre voyage.
+            Vivez la fusion entre l'énergie céleste et l'intelligence artificielle. 
+            Laissez la technologie interpréter votre signature astrale pour révéler l'image unique de votre essence.
           </p>
+
           <div className="flex flex-col md:flex-row justify-center gap-6 pt-6">
             <button
               onClick={() => { setQuizLength('short'); setStep(1); }}
