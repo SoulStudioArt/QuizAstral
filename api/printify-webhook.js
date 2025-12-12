@@ -3,25 +3,22 @@ import fetch from 'node-fetch';
 import getRawBody from 'raw-body';
 
 export default async function (req, res) {
-  // --- Section 1: Validation du Webhook Shopify (inchangée) ---
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
+    return res.status(405).json({ message: 'Méthode non autorisée.' });
   }
 
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const shopifyWebhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
   if (!hmacHeader || !shopifyWebhookSecret) {
-    console.error('Webhook secret ou header HMAC manquant.');
-    return res.status(401).json({ message: 'Erreur d\'authentification.' });
+    return res.status(401).json({ message: 'Authentification manquante.' });
   }
 
   const rawBody = await getRawBody(req);
   const hmac = crypto.createHmac('sha256', shopifyWebhookSecret).update(rawBody).digest('base64');
 
   if (hmac !== hmacHeader) {
-    console.error('Hachage du webhook non valide.');
-    return res.status(401).json({ message: 'Hachage du webhook non valide.' });
+    return res.status(401).json({ message: 'Signature invalide.' });
   }
   
   try {
@@ -29,69 +26,48 @@ export default async function (req, res) {
     const printifyApiKey = process.env.PRINTIFY_API_KEY;
     const printifyStoreId = process.env.PRINTIFY_STORE_ID;
 
-    if (!printifyApiKey || !printifyStoreId) {
-      console.error('Variables d\'environnement Printify manquantes.');
-      return res.status(500).json({ error: 'Configuration Printify incomplète.' });
-    }
-
-    // ====================== MODIFICATION 1 : Utiliser .filter() ======================
-    // On récupère TOUS les articles personnalisés, pas seulement le premier.
+    // 1. FILTRAGE
     const personalizedItems = order.line_items.filter(item => 
         item.properties && item.properties.some(p => p.name === '_printify_variant_id')
     );
 
     if (personalizedItems.length === 0) {
-      console.log('Commande sans items personnalisés Printify. Aucune action requise.');
-      return res.status(200).json({ message: 'Aucun item personnalisé Printify.' });
+      return res.status(200).json({ message: 'Aucun produit personnalisé.' });
     }
 
-    // ====================== MODIFICATION 2 : Construire une liste d'articles ======================
-    // On utilise .map() pour transformer chaque article Shopify en un article au format Printify.
+    // 2. MAPPING
     const printifyLineItems = personalizedItems.map(item => {
-      // On cherche les propriétés spécifiques à CET article.
-      const customImageProperty = item.properties.find(prop => prop.name.startsWith('Image Personnalisée'));
-      const variantProperty = item.properties.find(prop => prop.name === '_printify_variant_id');
+      const customImageProperty = item.properties.find(p => p.name.startsWith('Image Personnalisée'));
+      const variantProperty = item.properties.find(p => p.name === '_printify_variant_id');
       const blueprintProperty = item.properties.find(p => p.name === '_printify_blueprint_id');
       const providerProperty = item.properties.find(p => p.name === '_printify_provider_id');
 
-      // Si une des propriétés manque pour cet article, on retourne null pour le filtrer plus tard.
-      if (!customImageProperty || !variantProperty || !blueprintProperty || !providerProperty) {
-        console.error('Données de personnalisation manquantes pour un article:', item.sku);
-        return null;
-      }
-      
-      const imageUrl = customImageProperty.value;
-      const printifyVariantId = parseInt(variantProperty.value, 10);
-      const printifyBlueprintId = parseInt(blueprintProperty.value, 10);
-      const printifyPrintProviderId = parseInt(providerProperty.value, 10);
+      if (!customImageProperty || !variantProperty || !blueprintProperty || !providerProperty) return null;
 
-      // On retourne l'objet au format attendu par l'API Printify.
       return {
-        variant_id: printifyVariantId,
-        blueprint_id: printifyBlueprintId, 
-        print_provider_id: printifyPrintProviderId,
+        variant_id: parseInt(variantProperty.value, 10),
+        blueprint_id: parseInt(blueprintProperty.value, 10), 
+        print_provider_id: parseInt(providerProperty.value, 10),
         quantity: item.quantity,
         print_areas: {
           "front": [
-            { "src": imageUrl, "x": 0.5, "y": 0.5, "scale": 1, "angle": 0 }
+            { "src": customImageProperty.value, "x": 0.5, "y": 0.5, "scale": 1, "angle": 0 }
           ]
         },
-        "print_details": {
-          "print_on_side": "mirror"
-        }
+        "print_details": { "print_on_side": "mirror" }
       };
-    }).filter(Boolean); // .filter(Boolean) retire tous les 'null' de la liste.
+    }).filter(Boolean);
 
-    // Si après le mapping, aucun article n'est valide, on s'arrête.
     if (printifyLineItems.length === 0) {
-        console.error('Aucun article valide à envoyer à Printify pour la commande:', order.order_number);
-        return res.status(400).json({ error: 'Aucun article valide à envoyer à Printify.' });
+        return res.status(200).json({ message: 'Données ignorées.' });
     }
 
-    // --- Section 4: Construction et envoi de la commande à Printify ---
+    // 3. ENVOI (SÉCURISÉ)
     const printifyPayload = {
-      external_id: `shopify-order-${order.id}`,
-      line_items: printifyLineItems, // <-- On utilise notre nouvelle liste d'articles
+      // SÉCURITÉ : On utilise UNIQUEMENT l'ID Shopify. 
+      // Si on ajoute l'heure ici, on risque de créer des vrais doublons payants.
+      external_id: `shopify-order-${order.id}`, 
+      line_items: printifyLineItems,
       shipping_method: 1,
       send_shipping_notification: true,
       address_to: {
@@ -117,16 +93,27 @@ export default async function (req, res) {
       body: JSON.stringify(printifyPayload)
     });
 
+    // 4. GESTION DES RÉPONSES
     if (!printifyResponse.ok) {
       const errorData = await printifyResponse.json();
-      console.error('Erreur de l\'API Printify:', errorData);
-      return res.status(500).json({ error: 'Erreur lors de la création de la commande Printify.', details: errorData });
+      
+      // LE FILET DE SÉCURITÉ :
+      // Si Printify dit "J'ai déjà cette commande" (Code 8100), 
+      // C'est une bonne nouvelle ! Ça veut dire que la commande est passée.
+      // On répond 200 OK à Shopify pour qu'il arrête d'essayer.
+      if (errorData.code === 8100 || (errorData.errors && errorData.errors.reason && errorData.errors.reason.includes('already exists'))) {
+          console.log('Doublon bloqué avec succès (Commande déjà en sécurité chez Printify).');
+          return res.status(200).json({ message: 'Déjà traitée.' });
+      }
+
+      console.error('Erreur réelle Printify:', errorData);
+      return res.status(500).json({ error: 'Erreur Printify', details: errorData });
     }
     
-    res.status(200).json({ message: 'Commande Printify créée avec succès.', orderId: order.id });
+    res.status(200).json({ message: 'Succès', orderId: order.id });
 
   } catch (error) {
-    console.error('Erreur lors du traitement du webhook Shopify:', error);
-    res.status(500).json({ error: 'Une erreur interne est survenue.' });
+    console.error('Erreur serveur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }
