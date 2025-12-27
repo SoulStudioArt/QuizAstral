@@ -11,15 +11,29 @@ export default async function (req, res) {
     const { answers } = req.body;
     
     if (!answers) {
+      console.error("ERREUR : Aucune réponse reçue dans le body.");
       return res.status(400).json({ error: 'Données manquantes.' });
     }
 
-    console.log('--- DONNÉES REÇUES DU QUIZ ---');
+    // ============================================================
+    // 🕵️‍♂️ LOGS DE DÉBOGAGE (Visible dans Vercel / Rev)
+    // ============================================================
+    console.log('================================================');
+    console.log('🚀 DÉMARRAGE GÉNÉRATION IMAGE SOUL STUDIO');
+    console.log('================================================');
+    console.log('📥 DONNÉES REÇUES DU CLIENT :');
+    console.log(`- Prénom : ${answers.name}`);
+    console.log(`- Date Naissance : ${answers.birthDate}`);
+    console.log(`- Heure Naissance : ${answers.birthTime}`);
+    console.log(`- Lieu Naissance : ${answers.birthPlace}`);
+    console.log(`- Aura/Trait : ${answers.personalityTrait}`);
+    console.log(`- Rêve : ${answers.biggestDream}`);
+    console.log(`- Leçon de Vie : ${answers.lifeLesson}`);
+    console.log('================================================');
 
     // --- ÉTAPE 1 : L'ARCHITECTE (Gemini 2.5) ---
     const apiKey = process.env.GEMINI_API_KEY; 
 
-    // On inclut TOUTES les réponses pour que l'image soit VRAIMENT unique
     const architectPrompt = `
       Tu es un Visionnaire Artistique IA pour "Soul Studio".
       Analyse ces données sacrées d'un client :
@@ -51,14 +65,13 @@ export default async function (req, res) {
       generationConfig: { response_mime_type: "application/json" }
     };
     
-    // ON GARDE TA VERSION : gemini-2.5-flash
     const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     
     if (!responseArchitect.ok) {
         const errTxt = await responseArchitect.text();
-        console.error("Erreur Gemini Architecte:", errTxt);
+        console.error("❌ Erreur Gemini Architecte:", errTxt);
         throw new Error(`Erreur Architecte: ${responseArchitect.statusText}`);
     }
     
@@ -67,7 +80,7 @@ export default async function (req, res) {
     try {
         plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
     } catch (e) {
-        // Fallback si le JSON est mal formé
+        console.warn("⚠️ JSON malformé par Gemini, utilisation du fallback.");
         plan = { 
             descriptionPourLeClient: "Une vision pure de votre énergie intérieure.", 
             promptPourImage: "Abstract sacred geometry, cosmic energy, blue and gold, 8k, no faces, ethereal masterpiece" 
@@ -75,7 +88,9 @@ export default async function (req, res) {
     }
     const { descriptionPourLeClient, promptPourImage } = plan;
 
-    console.log('--- PROMPT GÉNÉRÉ ---', promptPourImage);
+    console.log('🎨 PROMPT GÉNÉRÉ PAR L\'ARCHITECTE :');
+    console.log(promptPourImage);
+    console.log('================================================');
 
     // --- ÉTAPE 2 : L'ARTISTE (Vertex AI / Imagen) ---
     
@@ -93,8 +108,6 @@ export default async function (req, res) {
 
     const projectId = 'soulstudio-art';
     const location = 'us-central1';
-    
-    // On garde ton modèle Imagen (le 3.0 est très bien)
     const modelId = 'imagen-3.0-generate-001';
 
     const apiUrlImage = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${modelId}:predict`;
@@ -104,7 +117,6 @@ export default async function (req, res) {
       parameters: { 
           sampleCount: 1, 
           aspectRatio: "1:1",
-          // SÉCURITÉ CRITIQUE : On force l'IA à éviter les visages moches
           negativePrompt: "ugly, deformed face, bad anatomy, text, watermark, blurry, low quality, distorted eyes, realistic human face, creepy"
       }
     };
@@ -120,7 +132,7 @@ export default async function (req, res) {
 
     if (!responseImage.ok) {
         const errorBody = await responseImage.text();
-        console.error("Erreur Vertex AI:", errorBody);
+        console.error("❌ Erreur Vertex AI:", errorBody);
         throw new Error(`Erreur Vertex AI: ${responseImage.status} ${responseImage.statusText}`);
     }
 
@@ -129,17 +141,18 @@ export default async function (req, res) {
 
     // --- ÉTAPE 3 : Sauvegarde ---
     const imageBuffer = Buffer.from(base64Data, 'base64');
-    const filename = `revelation-celeste-${Date.now()}.png`;
+    const filename = `revelation-${Date.now()}.png`;
 
     const { url: imageUrl } = await put(filename, imageBuffer, {
       access: 'public',
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
+    console.log('✅ Image générée et sauvegardée :', imageUrl);
     res.status(200).json({ imageUrl, imageDescription: descriptionPourLeClient });
 
   } catch (error) {
-    console.error('Erreur Générale Image:', error);
+    console.error('❌ ERREUR CRITIQUE DANS GENERATE-IMAGE:', error);
     res.status(500).json({ error: error.message });
   }
 }
