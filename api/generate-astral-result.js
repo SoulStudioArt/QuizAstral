@@ -14,27 +14,31 @@ export default async function (req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
+    // --- PROMPT "SOUL STUDIO" OPTIMISÉ ---
+    // On force l'IA à créer des liens logiques et émotionnels
     const textPrompt = `
-      Créez une "Révélation Céleste" personnalisée pour une personne.
-      Informations de la personne :
-      - Prénom : ${answers.name || 'Non spécifié'}
-      - Date de naissance : ${answers.birthDate || 'Non spécifiée'}
-      - Lieu de naissance : ${answers.birthPlace || 'Non spécifié'}
-      ${answers.birthTime ? `- Heure de naissance : ${answers.birthTime}\n` : ''}
-      ${answers.personalityTrait ? `- Trait de personnalité : ${answers.personalityTrait}\n` : ''}
-      ${answers.biggestDream ? `- Plus grand rêve : ${answers.biggestDream}\n` : ''}
-      ${answers.lifeLesson ? `- Plus grande leçon de vie : ${answers.lifeLesson}\n` : ''}
+      Agis comme un oracle ancestral et bienveillant pour "Soul Studio Art".
+      Tu dois rédiger une "Révélation Céleste" (environ 250 mots) pour une âme unique.
       
-      Utilisez ces informations pour offrir une interprétation profonde et personnelle.
-      Le texte doit être inspiré par l'astrologie et la spiritualité.
-      Adoptez un ton inspirant et poétique, dans le style "Soul Studio Art".
-      Le texte doit être une révélation unique, d'environ 250 mots, et très personnalisé.
+      VOICI L'ESSENCE DE CETTE ÂME :
+      - Prénom : ${answers.name || 'L\'Âme Voyageuse'}
+      - Né(e) le : ${answers.birthDate || 'Date inconnue'}
+      - À : ${answers.birthPlace || 'Lieu inconnu'}
+      - Heure précise : ${answers.birthTime || 'Heure inconnue'}
+      - Son Aura (Trait) : ${answers.personalityTrait || 'Non défini'}
+      - Son Rêve Ultime : ${answers.biggestDream || 'Non défini'}
+      - Sa Leçon de Vie : ${answers.lifeLesson || 'Non définie'}
+
+      CONSIGNES DE RÉDACTION :
+      1. Interdiction de faire une liste à puces. Écris un récit fluide, poétique et mystique.
+      2. LE SECRET : Tisse des liens invisibles. Par exemple, explique comment leur lieu de naissance (ex: près de l'eau) nourrit leur rêve, ou comment leur heure de naissance influence leur trait de personnalité.
+      3. Ton : Profond, empathique, céleste. Tu ne parles pas À la personne, tu parles À SON ÂME.
+      4. Structure : Une introduction cosmique, un cœur de révélation qui analyse les liens subtils de ses réponses, et une conclusion inspirante (un mantra).
     `;
 
     const payloadText = { contents: [{ role: "user", parts: [{ text: textPrompt }] }] };
     
-    // ================== CORRECTION ICI ==================
-    // Remplacement de l'ancien modèle "preview-05-20" par le modèle stable "gemini-2.5-flash"
+    // ON GARDE TA VERSION PUISSANTE : gemini-2.5-flash
     const apiUrlText = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const responseText = await fetch(apiUrlText, {
@@ -44,19 +48,18 @@ export default async function (req, res) {
     });
 
     if (!responseText.ok) {
-        // Ajout d'une journalisation d'erreur plus détaillée
         const errorBody = await responseText.text();
-        console.error("Erreur détaillée de l'API Gemini (Texte):", errorBody);
-        return res.status(responseText.status).json({ error: `Erreur de l'API Gemini: ${responseText.statusText}` });
+        console.error("Erreur API Gemini (Texte):", errorBody);
+        return res.status(responseText.status).json({ error: `Erreur Gemini: ${responseText.statusText}` });
     }
 
     const resultText = await responseText.json();
-    const generatedText = resultText?.candidates?.[0]?.content?.parts?.[0]?.text || "Impossible de générer le texte.";
+    const generatedText = resultText?.candidates?.[0]?.content?.parts?.[0]?.text || "Les étoiles sont silencieuses pour le moment...";
 
     res.status(200).json({ text: generatedText });
 
   } catch (error) {
-    console.error('Erreur de la Vercel Function (texte) :', error);
-    res.status(500).json({ error: 'Une erreur est survenue sur le serveur lors de la génération du texte.' });
+    console.error('Erreur Vercel (texte) :', error);
+    res.status(500).json({ error: 'Erreur serveur génération texte.' });
   }
 }

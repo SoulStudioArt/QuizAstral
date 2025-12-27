@@ -1,41 +1,49 @@
 import fetch from 'node-fetch';
 import { put } from '@vercel/blob';
-import { GoogleAuth } from 'google-auth-library'; // L'outil pour le passeport
+import { GoogleAuth } from 'google-auth-library';
 
 export default async function (req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Méthode non autorisée. Utilisez POST.' });
+    return res.status(405).json({ message: 'Méthode non autorisée.' });
   }
 
   try {
     const { answers } = req.body;
     
     if (!answers) {
-      return res.status(400).json({ error: 'Données de quiz manquantes.' });
+      return res.status(400).json({ error: 'Données manquantes.' });
     }
 
     console.log('--- DONNÉES REÇUES DU QUIZ ---');
 
-    // Configuration Vertex AI
-    const projectId = 'soulstudio-art';
-    const location = 'us-central1';
-    const modelId = 'imagen-3.0-generate-001'; // Modèle stable pour Vertex AI
-
-    // --- ÉTAPE 1 : L'IA "ARCHITECTE" (Gemini - Texte) ---
-    // On garde la clé API simple pour le texte car ça marche très bien
+    // --- ÉTAPE 1 : L'ARCHITECTE (Gemini 2.5) ---
     const apiKey = process.env.GEMINI_API_KEY; 
 
+    // On inclut TOUTES les réponses pour que l'image soit VRAIMENT unique
     const architectPrompt = `
-      Tu es un directeur artistique et un poète symboliste. En te basant STRICTEMENT sur les informations suivantes :
-      - Prénom: ${answers.name || 'Anonyme'}
-      - Date de naissance: ${answers.birthDate || 'Inconnue'}
-      - Trait de personnalité: ${answers.personalityTrait || 'Mystérieux'}
-      - Plus grand rêve: ${answers.biggestDream || 'Explorer l\'inconnu'}
+      Tu es un Visionnaire Artistique IA pour "Soul Studio".
+      Analyse ces données sacrées d'un client :
+      1. Prénom: ${answers.name}
+      2. Date/Heure: ${answers.birthDate} à ${answers.birthTime}
+      3. Lieu: ${answers.birthPlace}
+      4. Aura: ${answers.personalityTrait}
+      5. Rêve: ${answers.biggestDream}
+      6. Leçon de vie: ${answers.lifeLesson}
+
+      TA MISSION :
+      Crée un objet JSON avec deux champs :
       
-      Ta mission est de produire deux choses distinctes sous forme d'objet JSON :
-      1.  descriptionPourLeClient: Une description poétique et HAUTEMENT PERSONNALISÉE de 2-3 phrases. Elle doit s'adresser directement à la personne.
-      2.  promptPourImage: Un prompt technique et visuel, en anglais, pour générer cette image, en te concentrant sur des motifs de géométrie astrale complexe.
-      Réponds UNIQUEMENT avec un objet JSON valide au format : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
+      1. "descriptionPourLeClient": Une phrase mystique de 20 mots max qui explique pourquoi cette image représente leur âme (utilise le "Tu").
+      
+      2. "promptPourImage": Un prompt TRÈS DÉTAILLÉ en ANGLAIS pour un générateur d'image (Imagen).
+      
+      RÈGLES STRICTES POUR LE PROMPT IMAGE :
+      - Style : Abstract Spiritual Art, Sacred Geometry, Ethereal, Bioluminescent, Cosmic Nebula.
+      - ÉLÉMENTS : Incorpore visuellement des éléments subtils liés à son "Lieu" (ex: montagnes, océan, ville) et son "Rêve".
+      - SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. Focus on silhouettes, energy flows, constellations, hands, or eyes of the universe.
+      - Qualité : 8k resolution, cinematic lighting, masterpiece, intricate details.
+      
+      Format de réponse attendu : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
     `;
 
     const payloadArchitect = {
@@ -43,14 +51,15 @@ export default async function (req, res) {
       generationConfig: { response_mime_type: "application/json" }
     };
     
+    // ON GARDE TA VERSION : gemini-2.5-flash
     const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     
     if (!responseArchitect.ok) {
         const errTxt = await responseArchitect.text();
-        console.error("Erreur Gemini:", errTxt);
-        throw new Error(`Erreur Gemini Architecte: ${responseArchitect.statusText}`);
+        console.error("Erreur Gemini Architecte:", errTxt);
+        throw new Error(`Erreur Architecte: ${responseArchitect.statusText}`);
     }
     
     const resultArchitect = await responseArchitect.json();
@@ -58,17 +67,18 @@ export default async function (req, res) {
     try {
         plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
     } catch (e) {
-        // Fallback de sécurité
-        plan = { descriptionPourLeClient: "Une œuvre céleste unique.", promptPourImage: "Cosmic nebula abstract art, high quality" };
+        // Fallback si le JSON est mal formé
+        plan = { 
+            descriptionPourLeClient: "Une vision pure de votre énergie intérieure.", 
+            promptPourImage: "Abstract sacred geometry, cosmic energy, blue and gold, 8k, no faces, ethereal masterpiece" 
+        };
     }
     const { descriptionPourLeClient, promptPourImage } = plan;
 
     console.log('--- PROMPT GÉNÉRÉ ---', promptPourImage);
 
-    // --- ÉTAPE 2 : L'IA "ARTISTE" (Vertex AI / Imagen - Image) ---
-    // Utilisation du PASSEPORT DIPLOMATIQUE (Compte de Service)
-
-    // A. On s'authentifie avec les variables Vercel
+    // --- ÉTAPE 2 : L'ARTISTE (Vertex AI / Imagen) ---
+    
     const auth = new GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -77,24 +87,33 @@ export default async function (req, res) {
       scopes: ['https://www.googleapis.com/auth/cloud-platform'],
     });
 
-    // B. On récupère un jeton d'accès temporaire
     const client = await auth.getClient();
     const accessToken = await client.getAccessToken();
     const token = accessToken.token;
 
-    // C. On appelle la porte "Pro" (Vertex AI)
+    const projectId = 'soulstudio-art';
+    const location = 'us-central1';
+    
+    // On garde ton modèle Imagen (le 3.0 est très bien)
+    const modelId = 'imagen-3.0-generate-001';
+
     const apiUrlImage = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${modelId}:predict`;
 
     const payloadImage = {
       instances: [ { prompt: promptPourImage } ],
-      parameters: { sampleCount: 1, aspectRatio: "1:1" }
+      parameters: { 
+          sampleCount: 1, 
+          aspectRatio: "1:1",
+          // SÉCURITÉ CRITIQUE : On force l'IA à éviter les visages moches
+          negativePrompt: "ugly, deformed face, bad anatomy, text, watermark, blurry, low quality, distorted eyes, realistic human face, creepy"
+      }
     };
 
     const responseImage = await fetch(apiUrlImage, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // On montre le jeton sécurisé
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payloadImage)
     });
@@ -106,8 +125,6 @@ export default async function (req, res) {
     }
 
     const resultImage = await responseImage.json();
-    
-    // Récupération de l'image
     const base64Data = resultImage.predictions[0].bytesBase64Encoded;
 
     // --- ÉTAPE 3 : Sauvegarde ---
@@ -122,7 +139,7 @@ export default async function (req, res) {
     res.status(200).json({ imageUrl, imageDescription: descriptionPourLeClient });
 
   } catch (error) {
-    console.error('Erreur Générale:', error);
+    console.error('Erreur Générale Image:', error);
     res.status(500).json({ error: error.message });
   }
 }
