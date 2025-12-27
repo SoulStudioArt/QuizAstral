@@ -16,48 +16,44 @@ export default async function (req, res) {
     }
 
     // ============================================================
-    // 🕵️‍♂️ LOGS DE DÉBOGAGE (Visible dans Vercel / Rev)
+    // 🕵️‍♂️ LOGS DE DÉBOGAGE
     // ============================================================
     console.log('================================================');
     console.log('🚀 DÉMARRAGE GÉNÉRATION IMAGE SOUL STUDIO');
-    console.log('================================================');
-    console.log('📥 DONNÉES REÇUES DU CLIENT :');
     console.log(`- Prénom : ${answers.name}`);
-    console.log(`- Date Naissance : ${answers.birthDate}`);
-    console.log(`- Heure Naissance : ${answers.birthTime}`);
-    console.log(`- Lieu Naissance : ${answers.birthPlace}`);
-    console.log(`- Aura/Trait : ${answers.personalityTrait}`);
+    console.log(`- Lieu/Date : ${answers.birthPlace} / ${answers.birthDate}`);
     console.log(`- Rêve : ${answers.biggestDream}`);
-    console.log(`- Leçon de Vie : ${answers.lifeLesson}`);
+    console.log(`- Trait : ${answers.personalityTrait}`);
     console.log('================================================');
 
     // --- ÉTAPE 1 : L'ARCHITECTE (Gemini 2.5) ---
     const apiKey = process.env.GEMINI_API_KEY; 
 
     const architectPrompt = `
-      Tu es un Visionnaire Artistique IA pour "Soul Studio".
-      Analyse ces données sacrées d'un client :
+      Tu es le Directeur Artistique de "Soul Studio".
+      Analyse les réponses sacrées de ce client :
       1. Prénom: ${answers.name}
-      2. Date/Heure: ${answers.birthDate} à ${answers.birthTime}
-      3. Lieu: ${answers.birthPlace}
-      4. Aura: ${answers.personalityTrait}
-      5. Rêve: ${answers.biggestDream}
-      6. Leçon de vie: ${answers.lifeLesson}
+      2. Lieu de naissance: ${answers.birthPlace}
+      3. Rêve: ${answers.biggestDream}
+      4. Trait de personnalité: ${answers.personalityTrait}
+      5. Leçon de vie: ${answers.lifeLesson}
 
       TA MISSION :
-      Crée un objet JSON avec deux champs :
+      Crée un objet JSON avec deux champs.
       
-      1. "descriptionPourLeClient": Une phrase mystique de 20 mots max qui explique pourquoi cette image représente leur âme (utilise le "Tu").
+      1. "promptPourImage": (Anglais) Un prompt TRÈS DÉTAILLÉ pour Imagen.
+         - Style : Abstract Spiritual Art, Sacred Geometry, Ethereal, Bioluminescent.
+         - INSTRUCTION CLÉ : Intègre des métaphores visuelles du LIEU (ex: montagnes abstraites pour les Alpes) et du RÊVE.
+         - SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. Focus on energy, silhouettes, constellations. 8k resolution.
       
-      2. "promptPourImage": Un prompt TRÈS DÉTAILLÉ en ANGLAIS pour un générateur d'image (Imagen).
+      2. "descriptionPourLeClient": (Français) LE "DÉCODAGE DE L'ÂME".
+         - Ce texte accompagnera l'image pour expliquer au client POURQUOI cette œuvre est unique à lui.
+         - Longueur : 40-50 mots.
+         - IMPORTANT : Tu dois révéler subtilement les éléments cachés.
+         - EXEMPLE DE TON : "Les structures cristallines bleutées évoquent votre naissance près de l'océan, tandis que le faisceau doré central symbolise votre rêve de liberté. Cette composition reflète la résilience de votre âme."
+         - Ne sois pas générique. Cite précisément comment tu as traduit son "Lieu" ou son "Rêve" ou son "Trait" dans l'image.
       
-      RÈGLES STRICTES POUR LE PROMPT IMAGE :
-      - Style : Abstract Spiritual Art, Sacred Geometry, Ethereal, Bioluminescent, Cosmic Nebula.
-      - ÉLÉMENTS : Incorpore visuellement des éléments subtils liés à son "Lieu" (ex: montagnes, océan, ville) et son "Rêve".
-      - SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. Focus on silhouettes, energy flows, constellations, hands, or eyes of the universe.
-      - Qualité : 8k resolution, cinematic lighting, masterpiece, intricate details.
-      
-      Format de réponse attendu : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
+      Format attendu : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
     `;
 
     const payloadArchitect = {
@@ -80,17 +76,16 @@ export default async function (req, res) {
     try {
         plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
     } catch (e) {
-        console.warn("⚠️ JSON malformé par Gemini, utilisation du fallback.");
+        console.warn("⚠️ Fallback JSON");
         plan = { 
-            descriptionPourLeClient: "Une vision pure de votre énergie intérieure.", 
-            promptPourImage: "Abstract sacred geometry, cosmic energy, blue and gold, 8k, no faces, ethereal masterpiece" 
+            descriptionPourLeClient: "Une œuvre céleste unique reflétant votre énergie intérieure.", 
+            promptPourImage: "Abstract sacred geometry, cosmic energy, 8k, no faces" 
         };
     }
     const { descriptionPourLeClient, promptPourImage } = plan;
 
-    console.log('🎨 PROMPT GÉNÉRÉ PAR L\'ARCHITECTE :');
-    console.log(promptPourImage);
-    console.log('================================================');
+    console.log('📝 DESCRIPTION POUR LE CLIENT :', descriptionPourLeClient);
+    console.log('🎨 PROMPT :', promptPourImage);
 
     // --- ÉTAPE 2 : L'ARTISTE (Vertex AI / Imagen) ---
     
@@ -123,10 +118,7 @@ export default async function (req, res) {
 
     const responseImage = await fetch(apiUrlImage, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(payloadImage)
     });
 
@@ -139,7 +131,7 @@ export default async function (req, res) {
     const resultImage = await responseImage.json();
     const base64Data = resultImage.predictions[0].bytesBase64Encoded;
 
-    // --- ÉTAPE 3 : Sauvegarde ---
+    // --- ÉTAPE 3 : SAUVEGARDE ---
     const imageBuffer = Buffer.from(base64Data, 'base64');
     const filename = `revelation-${Date.now()}.png`;
 
@@ -148,11 +140,11 @@ export default async function (req, res) {
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
-    console.log('✅ Image générée et sauvegardée :', imageUrl);
+    console.log('✅ Image sauvegardée :', imageUrl);
     res.status(200).json({ imageUrl, imageDescription: descriptionPourLeClient });
 
   } catch (error) {
-    console.error('❌ ERREUR CRITIQUE DANS GENERATE-IMAGE:', error);
+    console.error('❌ ERREUR:', error);
     res.status(500).json({ error: error.message });
   }
 }
