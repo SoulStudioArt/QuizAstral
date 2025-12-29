@@ -15,12 +15,16 @@ export default async function (req, res) {
       return res.status(400).json({ error: 'Données manquantes.' });
     }
 
+    // --- NOUVEAU : On récupère l'initiale pour la personnalisation ---
+    const firstName = answers.name || "Ame";
+    const initial = firstName.charAt(0).toUpperCase();
+
     // ============================================================
     // 🕵️‍♂️ LOGS DE DÉBOGAGE
     // ============================================================
     console.log('================================================');
-    console.log('🚀 DÉMARRAGE GÉNÉRATION IMAGE SOUL STUDIO');
-    console.log(`- Prénom : ${answers.name}`);
+    console.log('🚀 DÉMARRAGE GÉNÉRATION IMAGE SOUL STUDIO (AVEC INITIALE)');
+    console.log(`- Prénom : ${answers.name} (Initiale : ${initial})`);
     console.log(`- Lieu/Date : ${answers.birthPlace} / ${answers.birthDate}`);
     console.log(`- Rêve : ${answers.biggestDream}`);
     console.log(`- Trait : ${answers.personalityTrait}`);
@@ -32,7 +36,7 @@ export default async function (req, res) {
     const architectPrompt = `
       Tu es le Directeur Artistique de "Soul Studio".
       Analyse les réponses sacrées de ce client :
-      1. Prénom: ${answers.name}
+      1. Prénom: ${answers.name} (Initiale à intégrer : ${initial})
       2. Lieu de naissance: ${answers.birthPlace}
       3. Rêve: ${answers.biggestDream}
       4. Trait de personnalité: ${answers.personalityTrait}
@@ -44,14 +48,15 @@ export default async function (req, res) {
       1. "promptPourImage": (Anglais) Un prompt TRÈS DÉTAILLÉ pour Imagen.
          - Style : Abstract Spiritual Art, Sacred Geometry, Ethereal, astral.
          - INSTRUCTION CLÉ : Intègre des métaphores visuelles du LIEU (ex: montagnes abstraites pour les Alpes) et du RÊVE.
+         - SIGNATURE SECRÈTE (NOUVEAU) : Intègre SUBTILEMENT la lettre "${initial}" au centre de l'œuvre. Elle ne doit pas ressembler à une police d'écriture (font), mais être formée par des constellations, des lignes d'énergie ou de la géométrie sacrée. Elle doit être cachée dans l'art.
          - SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. Focus on energy, silhouettes, constellations. 8k resolution.
       
       2. "descriptionPourLeClient": (Français) LE "DÉCODAGE DE L'ÂME".
          - Ce texte accompagnera l'image pour expliquer au client POURQUOI cette œuvre est unique à lui.
          - Longueur : 40-50 mots.
-         - IMPORTANT : Tu dois révéler subtilement les éléments cachés.
-         - EXEMPLE DE TON : "Les structures cristallines bleutées évoquent votre naissance près de l'océan, tandis que le faisceau doré central symbolise votre rêve de liberté. Cette composition reflète la résilience de votre âme."
-         - Ne sois pas générique. Cite précisément comment tu as traduit son "Lieu" ou son "Rêve" ou son "Trait" dans l'image.
+         - IMPORTANT : Tu dois révéler subtilement les éléments cachés, y compris que la structure centrale dessine l'initiale "${initial}" de son nom.
+         - EXEMPLE DE TON : "Les structures cristallines bleutées évoquent votre naissance près de l'océan, tandis que la constellation centrale dessine subtilement le 'M' de votre identité."
+         - Ne sois pas générique. Cite précisément comment tu as traduit son "Lieu", son "Rêve" et son "Initiale".
       
       Format attendu : { "descriptionPourLeClient": "...", "promptPourImage": "..." }
     `;
@@ -78,8 +83,8 @@ export default async function (req, res) {
     } catch (e) {
         console.warn("⚠️ Fallback JSON");
         plan = { 
-            descriptionPourLeClient: "Une œuvre céleste unique reflétant votre énergie intérieure.", 
-            promptPourImage: "Abstract sacred geometry, cosmic energy, 8k, no faces" 
+            descriptionPourLeClient: `Une œuvre céleste unique où l'initiale ${initial} se dessine dans les étoiles.`, 
+            promptPourImage: `Abstract sacred geometry, cosmic energy, astral style, subtle letter ${initial} in constellations, 8k, no faces` 
         };
     }
     const { descriptionPourLeClient, promptPourImage } = plan;
@@ -112,6 +117,7 @@ export default async function (req, res) {
       parameters: { 
           sampleCount: 1, 
           aspectRatio: "1:1",
+          // Je garde exactement tes paramètres précédents
           negativePrompt: "ugly, deformed face, bad anatomy, text, watermark, blurry, low quality, distorted eyes, realistic human face, creepy"
       }
     };
