@@ -3,7 +3,7 @@ import { GoogleAuth } from 'google-auth-library';
 
 export default async function (req, res) {
   try {
-    const mode = req.query.mode || 'astral_originel';
+    const mode = req.query.mode || 'astral_pur';
     
     // --- Configuration ---
     const projectId = 'soulstudio-art';
@@ -18,24 +18,26 @@ export default async function (req, res) {
     const initial = "M"; 
 
     switch (mode) {
-        // RETOUR AUX SOURCES : LE STYLE QUI MARCHAIT
-        case 'astral_originel':
-            testTitle = `✨ Lab : Style Astral Originel (Martin / ${initial})`;
+        // RETOUR AU STYLE "SOUL STUDIO" (Astral & Géométrique)
+        case 'astral_pur':
+            testTitle = `✨ Lab : Style Astral Pur + Constellation '${initial}'`;
             architectPrompt = `
               Tu es Directeur Artistique.
               Crée un prompt JSON pour une image d'Art Spirituel (Ratio 1:1).
               
               CONTEXTE : Le client s'appelle Martin (Initiale ${initial}).
               
-              STYLE VISUEL : Abstract Spiritual Art, Sacred Geometry, Ethereal, astral.
-              (C'est le style le plus important : couleurs profondes, lumière cosmique, netteté).
+              STYLE VISUEL (PRIORITÉ ABSOLUE) : 
+              - Abstract Spiritual Art, Sacred Geometry, Astral, Cosmic.
+              - High contrast, bioluminescent details, sharp lines, deep space background.
+              - NE PAS FAIRE "ORGANIQUE" OU "FLOU". On veut du précis, du lumineux, du céleste.
               
-              INSTRUCTION :
-              1. Crée une image magnifique basée sur le style Astral/Géométrie.
-              2. Intègre l'initiale "${initial}" dans la composition.
-              3. Elle doit être visible mais artistique (pas un simple texte posé dessus).
+              MISSION INITIALE CACHÉE :
+              - Intègre l'initiale "${initial}" sous forme de CONSTELLATION ou de GÉOMÉTRIE SACRÉE.
+              - La lettre doit être faite d'étoiles reliées par de fines lignes lumineuses (comme une carte du ciel).
+              - Elle doit être élégante et fine, intégrée au reste du mandala ou de la nébuleuse.
               
-              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. Focus on energy, silhouettes, constellations. 8k resolution.
+              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. NO TEXT (Except the subtle initial). 8k resolution.
               
               Format JSON attendu : { "promptPourImage": "...", "description": "..." }
             `;
@@ -80,8 +82,8 @@ export default async function (req, res) {
         parameters: { 
             sampleCount: 1, 
             aspectRatio: "1:1",
-            // Ton Negative Prompt standard qui fonctionnait bien
-            negativePrompt: "ugly, deformed face, bad anatomy, text, watermark, blurry, low quality, distorted eyes, realistic human face, creepy"
+            // On interdit le style "organique/flou" pour retrouver le tranchant astral
+            negativePrompt: "organic, muddy, blurry, soft, pastel, ugly, deformed face, bad anatomy, text, watermark, realistic human face, creepy"
         } 
     };
 
