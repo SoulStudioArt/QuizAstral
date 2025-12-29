@@ -32,11 +32,14 @@ export default async function (req, res) {
               - High contrast, bioluminescent details, sharp lines, deep space background.
               - NE PAS FAIRE "ORGANIQUE" OU "FLOU". On veut du précis, du lumineux, du céleste.
               
-              MISSION INITIALE CACHÉE :
-              - Intègre l'initiale "${initial}" sous forme de CONSTELLATION ou de GÉOMÉTRIE SACRÉE.
-              - La lettre doit être faite d'étoiles reliées par de fines lignes lumineuses (comme une carte du ciel).
-              - Elle doit être élégante et fine, intégrée au reste du mandala ou de la nébuleuse.
+              MISSION : LE SECRET DE L'INITIALE (ULTRA-SUBTILE / PARÉIDOLIE) :
+              - L'initiale "${initial}" NE DOIT PAS être tracée, écrite, ni reliée par des traits.
+              - Elle doit apparaître par PARÉIDOLIE (comme une forme qu'on devine dans les nuages).
+              - La forme de la lettre doit être suggérée uniquement par la densité naturelle d'un amas d'étoiles ou une zone d'ombre dans la nébuleuse.
+              - C'est un "Easter Egg" invisible au premier regard. Le client ne doit la voir que s'il la cherche.
+              - INTERDICTION : Pas de lignes qui relient les étoiles pour former la lettre. Pas de contour net.
               
+
               SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. NO TEXT (Except the subtle initial). 8k resolution.
               
               Format JSON attendu : { "promptPourImage": "...", "description": "..." }
