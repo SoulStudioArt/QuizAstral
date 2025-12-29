@@ -3,10 +3,8 @@ import { GoogleAuth } from 'google-auth-library';
 
 export default async function (req, res) {
   try {
-    // Mode de test (par défaut 'astral_subtil')
     const mode = req.query.mode || 'astral_subtil';
     
-    // --- Configuration ---
     const projectId = 'soulstudio-art';
     const location = 'us-central1';
     const modelId = 'imagen-3.0-generate-001'; 
@@ -15,54 +13,48 @@ export default async function (req, res) {
     let architectPrompt = '';
     let testTitle = '';
     
-    // On simule une initiale pour le test (ex: "M" pour Martin)
+    // On garde "M" pour tester Martin
     const initial = "M"; 
 
     switch (mode) {
-        
-        // 🟢 LE TEST QUE TU VEUX FAIRE
         case 'astral_subtil':
-            testTitle = `✨ Lab : Style Astral + Initiale '${initial}' Organique`;
+            testTitle = `✨ Lab : Initiale '${initial}' (Version Paréidolie)`;
             architectPrompt = `
-              Tu es Directeur Artistique pour Soul Studio.
-              Crée un prompt JSON pour une image d'Art Spirituel Abstrait (Ratio 1:1).
+              Tu es Directeur Artistique.
+              Crée un prompt JSON pour une image Carrée (1:1).
               
               CONTEXTE : Le client s'appelle Martin (Initiale ${initial}).
               STYLE : Abstract Spiritual Art, Sacred Geometry, Ethereal, Astral.
               
-              SIGNATURE SECRÈTE (CRITIQUE) : Tu dois cacher la forme de la lettre "${initial}" dans l'image.
-              INTERDICTION FORMELLE : Ne JAMAIS "écrire" la lettre. Pas de calligraphie, pas de police d'écriture.
-              LA MÉTHODE : La lettre doit émerger organiquement (Pareidolia). Elle doit être suggérée par l'alignement naturel de quelques étoiles, une faille dans la nébuleuse ou une courbe d'énergie. Si on plisse les yeux, on la devine, mais c'est fait de poussière d'étoiles.
+              MISSION CRITIQUE (L'INITIALE CACHÉE) :
+              - Tu ne dois PAS demander "A letter ${initial}".
+              - Tu dois demander "A constellation arrangement that vagueley resembles the shape of an ${initial}" OU "A rift in the nebula forming a negative space ${initial}".
+              - Ça doit ressembler à un HASARD cosmique (Paréidolie).
+              - Si ça ressemble à un logo ou une police d'écriture, c'est raté.
+              - Mots clés à utiliser : "Faint", "Barely visible", "Star cluster", "Nebula formation".
               
-              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. Focus on energy, silhouettes, constellations. 8k resolution.
+              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. 8k resolution.
               
               Format JSON attendu : { "promptPourImage": "...", "description": "..." }
             `;
             break;
     }
 
-    architectPrompt += ` Réponds UNIQUEMENT avec un objet JSON valide sans Markdown.`;
+    architectPrompt += ` Réponds UNIQUEMENT avec un objet JSON valide.`;
 
-    // 1. GEMINI (L'Architecte)
+    // 1. GEMINI
     console.log(`🤖 Architecte au travail... Mode: ${mode}`);
     const payloadArchitect = { contents: [{ role: "user", parts: [{ text: architectPrompt }] }], generationConfig: { response_mime_type: "application/json" } };
     const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     const resultArchitect = await responseArchitect.json();
-    
-    let plan;
-    try {
-        plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
-    } catch (e) {
-        console.error("Erreur parsing JSON architecte", e);
-        plan = { promptPourImage: "Abstract astral art, 8k", description: "Erreur JSON" };
-    }
+    let plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
     const { promptPourImage, description } = plan;
 
     console.log(`🎨 Prompt généré : ${promptPourImage}`);
 
-    // 2. IMAGEN (L'Artiste)
+    // 2. IMAGEN
     const auth = new GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -79,40 +71,32 @@ export default async function (req, res) {
         parameters: { 
             sampleCount: 1, 
             aspectRatio: "1:1",
-            // SÉCURITÉ RENFORCÉE (Anti-Texte)
-            negativePrompt: "typography, font, text, calligraphy, signature, watermark, writing, alphabet, ugly, deformed face, bad anatomy, realistic human face, creepy, furniture, room"
+            // LISTE NOIRE RENFORCÉE (On interdit les lettres brillantes)
+            negativePrompt: "typography, font, text, letter, watermark, writing, alphabet, glowing letter, neon sign, logo, bold lines, ugly, deformed face"
         } 
     };
 
     const responseImage = await fetch(apiUrlImage, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payloadImage) });
-    
-    if (!responseImage.ok) {
-        throw new Error(`Erreur Imagen: ${responseImage.statusText}`);
-    }
-
     const resultImage = await responseImage.json();
     const base64Data = resultImage.predictions[0].bytesBase64Encoded;
 
-    // 3. AFFICHAGE HTML
+    // 3. AFFICHAGE
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(`
       <html>
         <body style="background:#0a0a0a; color:#f0f0f0; font-family:sans-serif; text-align:center; padding:20px;">
           <h2 style="color:#d4af37;">${testTitle}</h2>
           <div style="background:#161616; padding:20px; border-radius:15px; display:inline-block; border:1px solid #333; max-width: 600px;">
-            <img src="data:image/png;base64,${base64Data}" style="width:100%; height:auto; border-radius:8px; box-shadow:0 0 40px rgba(0,0,0,0.5);" />
+            <img src="data:image/png;base64,${base64Data}" style="width:100%; height:auto; border-radius:8px;" />
             <p style="margin-top:20px; font-style:italic; color:#ccc;">"${description}"</p>
-            <hr style="border-color:#333; margin: 20px 0;">
-            <p style="font-size:12px; color:#666; text-align:left;"><strong>PROMPT :</strong> ${promptPourImage}</p>
+            <p style="font-size:11px; color:#555;">PROMPT : ${promptPourImage}</p>
           </div>
-          <br><br>
-          <a href="/api/test-generation" style="color:#fff; text-decoration:none; border:1px solid #555; padding:10px 20px; border-radius:5px;">🔄 Régénérer (Nouvelle tentative)</a>
+          <br><br><a href="/api/test-generation" style="color:#fff; border:1px solid #555; padding:10px;">🔄 Régénérer</a>
         </body>
       </html>
     `);
 
   } catch (error) {
-    console.error(error);
     res.status(500).send(`<h1>Erreur</h1><p>${error.message}</p>`);
   }
 }
