@@ -42,7 +42,7 @@ export default async function (req, res) {
       Crée un objet JSON avec deux champs.
       
       1. "promptPourImage": (Anglais) Un prompt TRÈS DÉTAILLÉ pour Imagen.
-         - Style : Abstract Spiritual Art, Sacred Geometry, Ethereal, Bioluminescent.
+         - Style : Abstract Spiritual Art, Sacred Geometry, Ethereal, astral.
          - INSTRUCTION CLÉ : Intègre des métaphores visuelles du LIEU (ex: montagnes abstraites pour les Alpes) et du RÊVE.
          - SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. Focus on energy, silhouettes, constellations. 8k resolution.
       
