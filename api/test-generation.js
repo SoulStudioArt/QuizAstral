@@ -27,20 +27,19 @@ export default async function (req, res) {
               
               CONTEXTE : Le client s'appelle Martin (Initiale ${initial}).
               
-              STYLE VISUEL (PRIORITÉ ABSOLUE) : 
-              - Abstract Spiritual Art, Sacred Geometry, Astral, Cosmic.
-              - High contrast, bioluminescent details, sharp lines, deep space background.
-              - NE PAS FAIRE "ORGANIQUE" OU "FLOU". On veut du précis, du lumineux, du céleste.
+              STYLE VISUEL (99% DE L'IMAGE) : 
+              - Abstract Spiritual Art, Deep Space Nebula, Sacred Geometry.
+              - L'image doit être une explosion de couleurs astrales, de lumière et de poussière d'étoiles.
+              - C'est de l'art abstrait avant tout.
               
-              MISSION : LE SECRET DE L'INITIALE (ULTRA-SUBTILE / PARÉIDOLIE) :
-              - L'initiale "${initial}" NE DOIT PAS être tracée, écrite, ni reliée par des traits.
-              - Elle doit apparaître par PARÉIDOLIE (comme une forme qu'on devine dans les nuages).
-              - La forme de la lettre doit être suggérée uniquement par la densité naturelle d'un amas d'étoiles ou une zone d'ombre dans la nébuleuse.
-              - C'est un "Easter Egg" invisible au premier regard. Le client ne doit la voir que s'il la cherche.
-              - INTERDICTION : Pas de lignes qui relient les étoiles pour former la lettre. Pas de contour net.
+              MISSION "FANTÔME" (1% DE L'IMAGE) :
+              - L'initiale "${initial}" ne doit PAS être dessinée.
+              - Elle doit être une ILLUSION D'OPTIQUE (Pareidolia).
+              - Dis à l'IA de générer des "nuages de gaz cosmiques" ou des "failles sombres" qui, par hasard, ont une forme qui rappelle vaguement un "${initial}".
+              - Si le client regarde l'image sans lire le texte, il ne doit voir QUE de l'espace.
+              - C'est seulement en lisant la description qu'il comprendra le sens caché.
               
-
-              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. NO TEXT (Except the subtle initial). 8k resolution.
+              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. NO VISIBLE TEXT. NO SYMBOLS. 8k resolution.
               
               Format JSON attendu : { "promptPourImage": "...", "description": "..." }
             `;
