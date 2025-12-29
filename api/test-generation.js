@@ -13,27 +13,31 @@ export default async function (req, res) {
     let architectPrompt = '';
     let testTitle = '';
     
-    // On garde "M" pour tester Martin
+    // Initiale de test
     const initial = "M"; 
 
     switch (mode) {
         case 'astral_subtil':
-            testTitle = `✨ Lab : Initiale '${initial}' (Version Paréidolie)`;
+            testTitle = `✨ Lab : Initiale '${initial}' (Fusion Organique)`;
             architectPrompt = `
               Tu es Directeur Artistique.
-              Crée un prompt JSON pour une image Carrée (1:1).
+              Crée un prompt JSON pour une image d'Art Spirituel (Carrée 1:1).
               
               CONTEXTE : Le client s'appelle Martin (Initiale ${initial}).
-              STYLE : Abstract Spiritual Art, Sacred Geometry, Ethereal, Astral.
+              STYLE : Ethereal Spiritual Art, Abstract Organic Textures, Dreamy Atmosphere.
+              (Évite le look "Science-Fiction" ou "Espace Profond" trop sombre).
               
               MISSION CRITIQUE (L'INITIALE CACHÉE) :
-              - Tu ne dois PAS demander "A letter ${initial}".
-              - Tu dois demander "A constellation arrangement that vagueley resembles the shape of an ${initial}" OU "A rift in the nebula forming a negative space ${initial}".
-              - Ça doit ressembler à un HASARD cosmique (Paréidolie).
-              - Si ça ressemble à un logo ou une police d'écriture, c'est raté.
-              - Mots clés à utiliser : "Faint", "Barely visible", "Star cluster", "Nebula formation".
+              1. L'IMAGE D'ABORD : L'initiale ne doit PAS être le centre de l'attention. L'image doit être une œuvre d'art magnifique et équilibrée.
+              2. DIVERSITÉ : Ne te limite pas aux étoiles ! La lettre peut être formée par :
+                 - Une volute de fumée ou de nuage.
+                 - Une faille dans une texture rocheuse.
+                 - Un jeu d'ombre et de lumière (Chiaroscuro).
+                 - Une veine d'or liquide (Kintsugi).
+                 - L'espace vide (négatif) entre deux formes.
+              3. SUBTILITÉ EXTRÊME : La lettre doit être petite, intégrée naturellement. C'est un secret, pas un titre.
               
-              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. 8k resolution.
+              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. NO TYPOGRAPHY.
               
               Format JSON attendu : { "promptPourImage": "...", "description": "..." }
             `;
@@ -71,8 +75,8 @@ export default async function (req, res) {
         parameters: { 
             sampleCount: 1, 
             aspectRatio: "1:1",
-            // LISTE NOIRE RENFORCÉE (On interdit les lettres brillantes)
-            negativePrompt: "typography, font, text, letter, watermark, writing, alphabet, glowing letter, neon sign, logo, bold lines, ugly, deformed face"
+            // On interdit formellement les lettres "écrites" ou brillantes
+            negativePrompt: "typography, font, text, giant letter, centered letter, neon sign, logo, bold lines, ugly, deformed, watermark"
         } 
     };
 
@@ -89,7 +93,7 @@ export default async function (req, res) {
           <div style="background:#161616; padding:20px; border-radius:15px; display:inline-block; border:1px solid #333; max-width: 600px;">
             <img src="data:image/png;base64,${base64Data}" style="width:100%; height:auto; border-radius:8px;" />
             <p style="margin-top:20px; font-style:italic; color:#ccc;">"${description}"</p>
-            <p style="font-size:11px; color:#555;">PROMPT : ${promptPourImage}</p>
+            <p style="font-size:11px; color:#555; text-align:left;">PROMPT : ${promptPourImage}</p>
           </div>
           <br><br><a href="/api/test-generation" style="color:#fff; border:1px solid #555; padding:10px;">🔄 Régénérer</a>
         </body>
