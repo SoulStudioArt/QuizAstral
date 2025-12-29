@@ -3,73 +3,70 @@ import { GoogleAuth } from 'google-auth-library';
 
 export default async function (req, res) {
   try {
-    // Choisir le type via l'URL. Par défaut 'luxury_boho_v2' pour tester tes changements
-    const type = req.query.type || 'luxury_boho_v2';
+    // On récupère le "mode" depuis l'adresse web (ex: ?mode=initiale)
+    const mode = req.query.mode || 'astral_doux';
     
-    // --- Infos Google Cloud ---
     const projectId = 'soulstudio-art';
     const location = 'us-central1';
     const modelId = 'imagen-3.0-generate-001'; 
     const apiKey = process.env.GEMINI_API_KEY;
 
     let architectPrompt = '';
-    let productTitle = '';
+    let testTitle = '';
 
-    switch (type) {
-        // --- SCÉNARIO 1 : BOHÈME VIBRANT (Coin Lecture) ---
-        // Changement : On met plus de couleurs (Violets/Oranges) et un décor "Fauteuil"
-        case 'luxury_boho_v2':
-            productTitle = "🔮 Mockup - Coin Lecture Mystique";
+    // --- LES 3 SCÉNARIOS DE TEST ---
+    switch (mode) {
+        
+        // 🟢 TEST 1 : LE STYLE "ASTRAL DOUX" (Celui qu'on a validé)
+        case 'astral_doux':
+            testTitle = "✨ Test 1 : Astral Doux & Mat";
             architectPrompt = `
-              Tu es un photographe d'intérieur.
-              Mission : Créer un JSON pour une mise en situation "Lifestyle".
-              JSON :
-              { 
-                "descriptionPourLeClient": "Mise en situation cosy avec une toile aux couleurs vibrantes.", 
-                "promptPourImage": "CENTERPIECE: A large 36x36 square canvas art hanging on a textured beige wall. The art is EXPLOSIVE: a mix of deep violet, fiery orange, and bright gold dust forming a cosmic mandala. CONTEXT: The canvas is hanging above a comfortable velvet armchair with a knitted throw blanket. Warm 'Golden Hour' sunlight hits the wall, enhancing the colors of the art. A stack of books on a side table. Photorealistic, 8k, cozy luxury." 
-              }
+              Tu es Directeur Artistique. Crée un prompt pour une image Carrée (1:1).
+              CONTEXTE : Une âme née à Paris qui rêve de Liberté.
+              STYLE : "Soft Spiritual Art", "Organic Textures", "Ethereal Watercolor", "Matte Finish".
+              COULEURS : Pastel, Earth tones, Gold dust. NO NEON.
+              SÉCURITÉ : No humans, no faces.
+              JSON : { "promptPourImage": "...", "description": "..." }
             `;
             break;
 
-        // --- SCÉNARIO 2 : MINIMALISTE ÉLECTRIQUE (Focus Couleur) ---
-        // Changement : Mur très blanc, Art très "Bleu/Cyan/Or" intense comme tes exemples
-        case 'luxury_vibrant':
-            productTitle = "⚡ Mockup - Énergie Pure";
+        // 🟡 TEST 2 : L'INITIALE CACHÉE (Pour voir si c'est subtil)
+        case 'initiale':
+            testTitle = "🤫 Test 2 : Initiale Cachée (Lettre 'A')";
             architectPrompt = `
-              Tu es un directeur artistique.
-              Mission : Créer un JSON où la toile est l'élément le plus coloré de la pièce.
-              JSON :
-              { 
-                "descriptionPourLeClient": "Contraste fort entre le mur blanc et l'énergie de la toile.", 
-                "promptPourImage": "CENTERPIECE: A premium square canvas art print on a pristine white wall. The art features a blindingly bright central star emitting waves of Electric Blue, Cyan, and Magenta energy against a deep black void. It looks like a high-tech spiritual portal. CONTEXT: Minimalist decor, a modern ceramic vase with dry branches on the side. Sharp, high-fashion lighting casting crisp shadows. 8k, ultra-detailed." 
-              }
+              Tu es Directeur Artistique. Crée un prompt pour une image Carrée (1:1).
+              CONTEXTE : Prénom "Alice".
+              MISSION : Intégrer la lettre "A" de façon ULTRA SUBTILE et camouflée dans des constellations ou des nuages.
+              STYLE : Astral, mystique, doux.
+              SÉCURITÉ : No humans, no faces.
+              JSON : { "promptPourImage": "...", "description": "..." }
             `;
             break;
 
-        // --- ANCIENS (Gardés pour référence) ---
-        case 'luxury_boho':
-            productTitle = "🌿 Mockup - Bohème (V1)";
-            architectPrompt = `Tu es photographe. JSON: { "descriptionPourLeClient": "V1", "promptPourImage": "CENTERPIECE: A large square canvas art on a beige wall. Art is Golden Sacred Geometry on black. CONTEXT: Wooden console, crystals, plants. Soft light. 8k." }`;
+        // 🔴 TEST 3 : L'ANCIEN STYLE (Pour comparer)
+        case 'ancien_neon':
+            testTitle = "⚡ Test 3 : Ancien Style (Néon/Vibrant)";
+            architectPrompt = `
+              Tu es Directeur Artistique.
+              STYLE : Cosmic Nebula, Bioluminescent, High Contrast, Neon colors.
+              SÉCURITÉ : No humans.
+              JSON : { "promptPourImage": "...", "description": "..." }
+            `;
             break;
-
-        default:
-             productTitle = "❓ Test Standard";
-             architectPrompt = `Tu es un assistant. JSON: { "descriptionPourLeClient": "Test défaut", "promptPourImage": "A mysterious blue energy sphere, abstract art, 8k." }`;
-             break;
     }
 
     architectPrompt += ` Réponds UNIQUEMENT avec un objet JSON valide.`;
 
-    // === ÉTAPE 1 : GEMINI ===
+    // 1. GEMINI (L'Architecte)
     const payloadArchitect = { contents: [{ role: "user", parts: [{ text: architectPrompt }] }], generationConfig: { response_mime_type: "application/json" } };
     const apiUrlArchitect = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     const resultArchitect = await responseArchitect.json();
     let plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
-    const { descriptionPourLeClient, promptPourImage } = plan;
+    const { promptPourImage, description } = plan;
 
-    // === ÉTAPE 2 : VERTEX AI ===
+    // 2. IMAGEN (L'Artiste)
     const auth = new GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -78,26 +75,33 @@ export default async function (req, res) {
       scopes: ['https://www.googleapis.com/auth/cloud-platform'],
     });
     const client = await auth.getClient();
-    const accessToken = await client.getAccessToken();
-    const token = accessToken.token;
+    const token = (await client.getAccessToken()).token;
 
     const apiUrlImage = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${modelId}:predict`;
-    const payloadImage = { instances: [ { prompt: promptPourImage } ], parameters: { sampleCount: 1, aspectRatio: "1:1" } };
+    const payloadImage = { 
+        instances: [ { prompt: promptPourImage } ], 
+        parameters: { 
+            sampleCount: 1, 
+            aspectRatio: "1:1",
+            // On utilise ton Negative Prompt sécurisé
+            negativePrompt: "neon, electric colors, oversaturated, high contrast, shiny, plastic, sci-fi, typography, fonts, text, watermark, ugly, deformed face, realistic human face"
+        } 
+    };
 
     const responseImage = await fetch(apiUrlImage, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payloadImage) });
     const resultImage = await responseImage.json();
     const base64Data = resultImage.predictions[0].bytesBase64Encoded;
 
-    // === ÉTAPE 3 : AFFICHAGE ===
+    // 3. AFFICHAGE HTML (Pas de sauvegarde, juste visionnage)
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(`
       <html>
-        <head><title>${productTitle}</title></head>
-        <body style="background:#0a0a0a; color:#f0f0f0; font-family:sans-serif; text-align:center; padding:20px;">
-          <h2 style="color:#d4af37; letter-spacing:2px;">${productTitle}</h2>
-          <div style="background:#1a1a1a; padding:20px; border-radius:15px; display:inline-block; border:1px solid #333;">
-            <img src="data:image/png;base64,${base64Data}" style="max-width:100%; height:auto; max-height:600px; border-radius:5px; box-shadow:0 0 50px rgba(0,0,0,0.5);" />
-            <p style="margin-top:20px; font-style:italic; color:#888;">${descriptionPourLeClient}</p>
+        <body style="background:#111; color:#eee; font-family:sans-serif; text-align:center; padding:40px;">
+          <h1 style="color:#d4af37;">${testTitle}</h1>
+          <div style="margin:20px auto; max-width:600px;">
+            <img src="data:image/png;base64,${base64Data}" style="width:100%; border-radius:10px; box-shadow:0 0 30px rgba(255,215,0,0.2);" />
+            <p style="margin-top:20px; font-size:18px; color:#aaa;">"${description}"</p>
+            <p style="font-size:12px; color:#555; margin-top:30px;">PROMPT UTILISÉ :<br>${promptPourImage}</p>
           </div>
         </body>
       </html>
