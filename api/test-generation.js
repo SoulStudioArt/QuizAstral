@@ -4,7 +4,6 @@ import { GoogleAuth } from 'google-auth-library';
 export default async function (req, res) {
   try {
     // Mode de test (par défaut 'astral_subtil')
-    // Tu pourras tester : /api/test-generation?mode=astral_subtil
     const mode = req.query.mode || 'astral_subtil';
     
     // --- Configuration ---
@@ -16,36 +15,27 @@ export default async function (req, res) {
     let architectPrompt = '';
     let testTitle = '';
     
-    // On simule une initiale (ex: "M" pour Martin)
+    // On simule une initiale pour le test (ex: "M" pour Martin)
     const initial = "M"; 
 
     switch (mode) {
         
-        // 🟢 CAS 1 : TON STYLE FINAL (Astral + Lettre Cachée)
+        // 🟢 LE TEST QUE TU VEUX FAIRE
         case 'astral_subtil':
-            testTitle = "✨ Test : Style Astral + Initiale 'M' Cachée";
+            testTitle = `✨ Lab : Style Astral + Initiale '${initial}' Organique`;
             architectPrompt = `
               Tu es Directeur Artistique pour Soul Studio.
               Crée un prompt JSON pour une image d'Art Spirituel Abstrait (Ratio 1:1).
               
-              CONTEXTE : Le client s'appelle Martin.
+              CONTEXTE : Le client s'appelle Martin (Initiale ${initial}).
               STYLE : Abstract Spiritual Art, Sacred Geometry, Ethereal, Astral.
-              SIGNATURE SECRÈTE : La lettre "${initial}" doit être PRESQUE INVISIBLE. Elle ne doit PAS être un logo. Elle doit être suggérée uniquement par l'alignement naturel de quelques étoiles ou une courbe de nébuleuse au centre. Camouflage parfait.
+              
+              SIGNATURE SECRÈTE (CRITIQUE) : Tu dois cacher la forme de la lettre "${initial}" dans l'image.
+              INTERDICTION FORMELLE : Ne JAMAIS "écrire" la lettre. Pas de calligraphie, pas de police d'écriture.
+              LA MÉTHODE : La lettre doit émerger organiquement (Pareidolia). Elle doit être suggérée par l'alignement naturel de quelques étoiles, une faille dans la nébuleuse ou une courbe d'énergie. Si on plisse les yeux, on la devine, mais c'est fait de poussière d'étoiles.
+              
               SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. Focus on energy, silhouettes, constellations. 8k resolution.
               
-              Format JSON attendu : { "promptPourImage": "...", "description": "..." }
-            `;
-            break;
-
-        // 🔴 CAS 2 : LE STYLE "DOUX/MAT" (Pour comparer si tu veux changer)
-        case 'style_doux':
-            testTitle = "🌸 Test : Style Doux & Mat (Aquarelle)";
-            architectPrompt = `
-              Tu es Directeur Artistique.
-              Crée un prompt JSON pour une image Carrée.
-              STYLE : "Soft Spiritual Art", "Organic Textures", "Ethereal Watercolor", "Matte Finish".
-              COULEURS : Pastel, Earth tones, Gold dust. PAS DE NÉON.
-              SIGNATURE : Initiale "${initial}" cachée dans les nuages.
               Format JSON attendu : { "promptPourImage": "...", "description": "..." }
             `;
             break;
@@ -89,8 +79,8 @@ export default async function (req, res) {
         parameters: { 
             sampleCount: 1, 
             aspectRatio: "1:1",
-            // Ton Negative Prompt Sécurisé
-            negativePrompt: "ugly, deformed face, bad anatomy, text, watermark, blurry, low quality, distorted eyes, realistic human face, creepy, furniture, room, wall, sofa, mockup"
+            // SÉCURITÉ RENFORCÉE (Anti-Texte)
+            negativePrompt: "typography, font, text, calligraphy, signature, watermark, writing, alphabet, ugly, deformed face, bad anatomy, realistic human face, creepy, furniture, room"
         } 
     };
 
@@ -116,7 +106,7 @@ export default async function (req, res) {
             <p style="font-size:12px; color:#666; text-align:left;"><strong>PROMPT :</strong> ${promptPourImage}</p>
           </div>
           <br><br>
-          <a href="/api/test-generation?mode=astral_subtil" style="color:#fff; text-decoration:none; border:1px solid #555; padding:10px 20px; border-radius:5px;">🔄 Régénérer</a>
+          <a href="/api/test-generation" style="color:#fff; text-decoration:none; border:1px solid #555; padding:10px 20px; border-radius:5px;">🔄 Régénérer (Nouvelle tentative)</a>
         </body>
       </html>
     `);
