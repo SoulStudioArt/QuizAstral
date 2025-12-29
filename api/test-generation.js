@@ -3,8 +3,9 @@ import { GoogleAuth } from 'google-auth-library';
 
 export default async function (req, res) {
   try {
-    const mode = req.query.mode || 'astral_subtil';
+    const mode = req.query.mode || 'astral_originel';
     
+    // --- Configuration ---
     const projectId = 'soulstudio-art';
     const location = 'us-central1';
     const modelId = 'imagen-3.0-generate-001'; 
@@ -13,38 +14,35 @@ export default async function (req, res) {
     let architectPrompt = '';
     let testTitle = '';
     
-    // Initiale de test
+    // On simule une initiale pour le test (ex: "M" pour Martin)
     const initial = "M"; 
 
     switch (mode) {
-        case 'astral_subtil':
-            testTitle = `✨ Lab : Initiale '${initial}' (Fusion Organique)`;
+        // RETOUR AUX SOURCES : LE STYLE QUI MARCHAIT
+        case 'astral_originel':
+            testTitle = `✨ Lab : Style Astral Originel (Martin / ${initial})`;
             architectPrompt = `
               Tu es Directeur Artistique.
-              Crée un prompt JSON pour une image d'Art Spirituel (Carrée 1:1).
+              Crée un prompt JSON pour une image d'Art Spirituel (Ratio 1:1).
               
               CONTEXTE : Le client s'appelle Martin (Initiale ${initial}).
-              STYLE : Ethereal Spiritual Art, Abstract Organic Textures, Dreamy Atmosphere.
-              (Évite le look "Science-Fiction" ou "Espace Profond" trop sombre).
               
-              MISSION CRITIQUE (L'INITIALE CACHÉE) :
-              1. L'IMAGE D'ABORD : L'initiale ne doit PAS être le centre de l'attention. L'image doit être une œuvre d'art magnifique et équilibrée.
-              2. DIVERSITÉ : Ne te limite pas aux étoiles ! La lettre peut être formée par :
-                 - Une volute de fumée ou de nuage.
-                 - Une faille dans une texture rocheuse.
-                 - Un jeu d'ombre et de lumière (Chiaroscuro).
-                 - Une veine d'or liquide (Kintsugi).
-                 - L'espace vide (négatif) entre deux formes.
-              3. SUBTILITÉ EXTRÊME : La lettre doit être petite, intégrée naturellement. C'est un secret, pas un titre.
+              STYLE VISUEL : Abstract Spiritual Art, Sacred Geometry, Ethereal, astral.
+              (C'est le style le plus important : couleurs profondes, lumière cosmique, netteté).
               
-              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. NO TYPOGRAPHY.
+              INSTRUCTION :
+              1. Crée une image magnifique basée sur le style Astral/Géométrie.
+              2. Intègre l'initiale "${initial}" dans la composition.
+              3. Elle doit être visible mais artistique (pas un simple texte posé dessus).
+              
+              SÉCURITÉ : NO REALISTIC FACES. NO HUMANS. Focus on energy, silhouettes, constellations. 8k resolution.
               
               Format JSON attendu : { "promptPourImage": "...", "description": "..." }
             `;
             break;
     }
 
-    architectPrompt += ` Réponds UNIQUEMENT avec un objet JSON valide.`;
+    architectPrompt += ` Réponds UNIQUEMENT avec un objet JSON valide sans Markdown.`;
 
     // 1. GEMINI
     console.log(`🤖 Architecte au travail... Mode: ${mode}`);
@@ -53,7 +51,14 @@ export default async function (req, res) {
     
     const responseArchitect = await fetch(apiUrlArchitect, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadArchitect) });
     const resultArchitect = await responseArchitect.json();
-    let plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
+    
+    let plan;
+    try {
+        plan = JSON.parse(resultArchitect.candidates[0].content.parts[0].text);
+    } catch (e) {
+        console.error("Erreur parsing JSON architecte", e);
+        plan = { promptPourImage: "Abstract sacred geometry, cosmic energy, astral style, 8k", description: "Erreur JSON" };
+    }
     const { promptPourImage, description } = plan;
 
     console.log(`🎨 Prompt généré : ${promptPourImage}`);
@@ -75,8 +80,8 @@ export default async function (req, res) {
         parameters: { 
             sampleCount: 1, 
             aspectRatio: "1:1",
-            // On interdit formellement les lettres "écrites" ou brillantes
-            negativePrompt: "typography, font, text, giant letter, centered letter, neon sign, logo, bold lines, ugly, deformed, watermark"
+            // Ton Negative Prompt standard qui fonctionnait bien
+            negativePrompt: "ugly, deformed face, bad anatomy, text, watermark, blurry, low quality, distorted eyes, realistic human face, creepy"
         } 
     };
 
