@@ -8,9 +8,12 @@ export default async function handler(req, res) {
 
   const printifyApiKey = process.env.PRINTIFY_API_KEY;
   const printifyStoreId = process.env.PRINTIFY_STORE_ID;
-  
-  // ID de ton produit "Toile Carrée" dans Printify
-  const printifyProductId = "68afb9338965a97df2049e3e"; 
+
+  // CONFIGURATION DES DEUX PRODUITS
+  // 1. Premium (L'ancien, on le garde en premier pour ne pas casser le site actuel)
+  const premiumId = "68afb9338965a97df2049e3e"; 
+  // 2. Standard (Le nouveau, pour l'option économique)
+  const standardId = "695ad1f4aaa143cc00020c47"; 
 
   if (!printifyApiKey || !printifyStoreId) {
     console.error("❌ ERREUR CONFIG : API Key ou Store ID manquant.");
@@ -18,51 +21,58 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. LOG DE DÉBUT
     console.log('================================================');
-    console.log('📦 RÉCUPÉRATION DU CATALOGUE PRINTIFY');
+    console.log('📦 RÉCUPÉRATION DU CATALOGUE COMPLET (STANDARD + PREMIUM)');
     console.log('================================================');
 
-    const productResponse = await fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/products/${printifyProductId}.json`, {
-      headers: { 'Authorization': `Bearer ${printifyApiKey}` },
-    });
+    // On lance les deux appels à Printify en PARALLÈLE (pour que ça aille vite)
+    const [premiumRes, standardRes] = await Promise.all([
+        fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/products/${premiumId}.json`, { headers: { 'Authorization': `Bearer ${printifyApiKey}` } }),
+        fetch(`https://api.printify.com/v1/shops/${printifyStoreId}/products/${standardId}.json`, { headers: { 'Authorization': `Bearer ${printifyApiKey}` } })
+    ]);
 
-    if (!productResponse.ok) {
-      const errorBody = await productResponse.text();
-      console.error(`❌ ERREUR API PRINTIFY: ${productResponse.status}`, errorBody);
-      throw new Error(`Erreur API Printify: ${productResponse.status}`);
+    if (!premiumRes.ok || !standardRes.ok) {
+        throw new Error(`Erreur API Printify lors de la récupération des produits.`);
     }
 
-    const productData = await productResponse.json();
-    console.log(`✅ Produit connecté : "${productData.title}"`);
+    const premiumData = await premiumRes.json();
+    const standardData = await standardRes.json();
 
-    // 2. TRAITEMENT ET LOG DES PRIX
-    const mappedVariants = productData.variants
-      .filter(v => v.is_enabled) // On garde seulement les actives
-      .sort((a, b) => parseInt(a.title) - parseInt(b.title)) // Tri par taille (6, 10, 12...)
-      .map(v => ({
-        id: v.id,
-        title: v.title,
-        price: v.price / 100, // Conversion cents -> dollars
-        sku: v.sku
-      }));
+    console.log(`✅ Premium chargé : "${premiumData.title}"`);
+    console.log(`✅ Standard chargé : "${standardData.title}"`);
 
-    // 3. AFFICHAGE DU TABLEAU DANS LES LOGS
-    console.log('📋 GRILLE TARIFAIRE ACTIVE :');
-    mappedVariants.forEach(variant => {
-        // On aligne le texte pour que ce soit joli dans les logs
-        console.log(`   🔹 Taille : ${variant.title.padEnd(10, ' ')} | Prix : ${variant.price.toFixed(2)} $`);
-    });
-    console.log('================================================');
-
-    const formattedProduct = {
-      title: productData.title,
-      blueprint_id: productData.blueprint_id,
-      print_provider_id: productData.print_provider_id,
-      variants: mappedVariants
+    // Fonction pour nettoyer et formater les données
+    const formatProduct = (data, type) => {
+        const variants = data.variants
+            .filter(v => v.is_enabled)
+            .sort((a, b) => parseInt(a.title) - parseInt(b.title))
+            .map(v => ({
+                id: v.id,
+                title: v.title, // Ex: "30" x 30" / 0.75""
+                price: v.price / 100,
+                sku: v.sku
+            }));
+        
+        return {
+            type: type, // "premium" ou "standard"
+            title: data.title,
+            blueprint_id: data.blueprint_id,
+            print_provider_id: data.print_provider_id,
+            variants: variants
+        };
     };
+
+    // On prépare la réponse
+    const catalog = [
+        formatProduct(premiumData, "premium"), // Index 0 (Le site actuel lit ça)
+        formatProduct(standardData, "standard") // Index 1 (Le nouveau choix)
+    ];
+
+    console.log('📋 CATALOGUE ENVOYÉ AU SITE AVEC SUCCÈS.');
+    console.log('================================================');
     
-    res.status(200).json([formattedProduct]);
+    // On renvoie la liste
+    res.status(200).json(catalog);
 
   } catch (error) {
     console.error('❌ ERREUR CRITIQUE GET-PRODUCTS:', error.message);
